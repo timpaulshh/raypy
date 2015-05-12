@@ -16,12 +16,14 @@ class Circle:
 class Window:
 	def update(self):
 		if self.geometry.contains(self.d[0], self.d[1]):
-			self.state[self.d[0]][self.d[1]] = "#000000"
+			self.img.put("#000000", (self.d[0], self.d[1])) 
+		else:
+			self.img.put("#ffffff", (self.d[0], self.d[1])) 
 
 	def draw(self):
-		# calculate new state for self.d
+		#update image
 		self.update()
-
+		
 		# next self.d
 		# hier ist irgendwas falsch
 		if self.d[0] < self.dimension[0]:
@@ -34,18 +36,11 @@ class Window:
 				self.master.after_cancel(self.after_id)
 				return
 
-		#draw state
-		for x,row in enumerate(self.state):
-			for y,value in enumerate(row):
-				self.img.put(value, (x, y))
-
-		# und zwar wenn man hier 10 statt 15 einsetzt?
-		self.after_id = self.master.after(15, self.draw)
+		self.after_id = self.master.after(5, self.draw)
 
 	def __init__(self, calculate, dimension, geometry, image, master):
 		self.geometry = geometry
 		self.d = calculate
-		self.state = [["#ffffff" for x in range(dimension[0])] for x in range(dimension[1])]
 		self.dimension = dimension
 		self.img = image
 		self.master = master
@@ -53,8 +48,8 @@ class Window:
 
 master = Tk()
 
-WIDTH = 50
-HEIGHT = 50
+WIDTH = 100
+HEIGHT = 100
 
 canvas = Canvas(master, width=WIDTH, height=HEIGHT)
 canvas.pack()
