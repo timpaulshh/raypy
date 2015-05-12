@@ -23,7 +23,7 @@ class Window:
 		self.update()
 
 		# next self.d
-		if (self.d[0] < self.dimension[0]:
+		if self.d[0] < self.dimension[0]:
 			self.d[0] = self.d[0] + 1
 		else:
 			self.d[0] = 0
