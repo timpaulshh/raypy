@@ -2,6 +2,7 @@
 
 from Tkinter import *
 import math
+import numpy as np
 
 class Circle:
 	def contains(self, x, y):
@@ -25,7 +26,6 @@ class Window:
 		self.update()
 		
 		# next self.d
-		# hier ist irgendwas falsch
 		if self.d[0] < self.dimension[0]:
 			self.d[0] = self.d[0] + 1
 		else:
@@ -36,7 +36,7 @@ class Window:
 				self.master.after_cancel(self.after_id)
 				return
 
-		self.after_id = self.master.after(5, self.draw)
+		self.after_id = self.master.after(1, self.draw)
 
 	def __init__(self, calculate, dimension, geometry, image, master):
 		self.geometry = geometry
@@ -45,6 +45,31 @@ class Window:
 		self.img = image
 		self.master = master
 		self.after_id = 0
+
+class Ray:
+	def __init__(self, origin, direction):
+		self.origin = np.array(origin)
+		self.direction = np.array(direction) / np.linalg.norm(np.array(direction))
+
+class Plane:
+	def __init__(self, origin, normal):
+		self.origin = np.array(origin)
+		self.normal = np.array(normal) / np.linalg.norm(np.array(normal))
+
+	def intersect(self, ray):
+		denom = np.dot(ray.direction, self.normal)
+		if np.abs(denom) < 1e-6:
+			return np.inf
+		d = np.dot(self.origin - ray.origin, self.normal) / denom
+		if d < 0:
+			return np.inf
+		return d
+
+
+r = Ray([0, 0, 0], [0, 0, 1])
+p = Plane([0, 0, 5], [0, 0, -1])
+print p.intersect(r)
+
 
 master = Tk()
 
