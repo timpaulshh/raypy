@@ -45,16 +45,22 @@ class Window:
 		self.img = image
 		self.master = master
 		self.after_id = 0
+		
+def vector_length(v):
+	return np.linalg.norm(v)
+		
+def normalize(v):
+	return v / vector_length(v)
 
 class Ray:
 	def __init__(self, origin, direction):
 		self.origin = np.array(origin)
-		self.direction = np.array(direction) / np.linalg.norm(np.array(direction))
+		self.direction = normalize(np.array(direction))
 
 class Plane:
 	def __init__(self, origin, normal):
 		self.origin = np.array(origin)
-		self.normal = np.array(normal) / np.linalg.norm(np.array(normal))
+		self.normal = normalize(np.array(normal))
 
 	def intersect(self, ray):
 		denom = np.dot(ray.direction, self.normal)
@@ -73,7 +79,7 @@ class Sphere:
 	def intersect(self, ray):
 		# line-sphere intersection term from en.wiki.org
 		loc = np.dot(ray.direction, (ray.origin - self.center))
-		oc_length = np.linalg.norm(ray.origin - self.center)
+		oc_length = vector_length(ray.origin - self.center)
 		# term in sqrt
 		term = loc * loc - oc_length * oc_length + self.radius * self.radius
 		
