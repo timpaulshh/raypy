@@ -16,15 +16,22 @@ class Circle:
 		self.r = radius
 
 class Window:
+	# returns a sorted list of tuples (distance, object)
+	def __distances(self, objects, ray):
+		return sorted(list(self.__distancesgen(objects, ray)), key=lambda x: x[0])
+			
+	def __distancesgen(self, objects, ray):
+		for obj in objects:
+			yield (obj.intersect(ray), obj)
+	
 	def update(self):
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
-		pixelIsEmpty = True
-		for obj in self.geometry:
-			if min(obj.intersect(ray)) < np.inf:
-				self.img.put(obj.getColorHex(), (self.d[0], self.d[1]))
-				pixelIsEmpty = False
-
-		if pixelIsEmpty:
+		
+		nearest = self.__distances(self.geometry, ray)[0]
+		
+		if min(nearest[0]) < np.inf:
+			self.img.put(nearest[1].getColorHex(), (self.d[0], self.d[1]))
+		else:
 			self.img.put("#ffffff", (self.d[0], self.d[1]))
 
 	def draw(self):
@@ -75,6 +82,6 @@ if __name__ == "__main__":
 	s2 = Sphere([0, 3, 5], 2)
 	s2.setColor((0, 200, 0))
 
-	window = Window(calculate = [0,0], geometry = [p, s1, s2], eye = eye, screen = screen, image = img, master = master)
+	window = Window(calculate = [0,0], geometry = [s2, s1, p], eye = eye, screen = screen, image = img, master = master)
 	window.draw()
 	master.mainloop()
