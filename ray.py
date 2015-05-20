@@ -6,16 +6,10 @@ import numpy as np
 from geometry import Ray, Plane, Sphere
 from scene import Screen
 
-class Circle:
-	def contains(self, x, y):
-		return  math.pow(x-self.x,2) + math.pow(y-self.y,2) <= math.pow(self.r,2)
-
-	def __init__(self, x, y, radius):
-		self.x = x
-		self.y = y
-		self.r = radius
-
-class Window:
+class SimpleRayTracer:
+	def __init__(self):
+		pass
+		
 	# returns a sorted list of tuples (distance, object)
 	def __distances(self, objects, ray):
 		return sorted(list(self.__distancesgen(objects, ray)), key=lambda x: x[0])
@@ -24,15 +18,27 @@ class Window:
 		for obj in objects:
 			yield (obj.intersect(ray), obj)
 	
+	def trace(self, ray, objects):
+		nearest = self.__distances(objects, ray)[0]
+		if min(nearest[0]) < np.inf:
+			return nearest[1].getColorHex()
+		else:
+			return "#ffffff"
+
+class Window:
+	def __init__(self, calculate, geometry, eye, screen, image, master, tracer = SimpleRayTracer()):
+		self.geometry = geometry
+		self.eye = eye
+		self.screen = screen
+		self.d = calculate
+		self.img = image
+		self.master = master
+		self.after_id = 0
+		self.tracer = tracer
+	
 	def update(self):
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
-		
-		nearest = self.__distances(self.geometry, ray)[0]
-		
-		if min(nearest[0]) < np.inf:
-			self.img.put(nearest[1].getColorHex(), (self.d[0], self.d[1]))
-		else:
-			self.img.put("#ffffff", (self.d[0], self.d[1]))
+		self.img.put(self.tracer.trace(ray, self.geometry), (self.d[0], self.d[1]))
 
 	def draw(self):
 		#update image
@@ -50,15 +56,6 @@ class Window:
 				return
 
 		self.after_id = self.master.after(1, self.draw)
-
-	def __init__(self, calculate, geometry, eye, screen, image, master):
-		self.geometry = geometry
-		self.eye = eye
-		self.screen = screen
-		self.d = calculate
-		self.img = image
-		self.master = master
-		self.after_id = 0
 
 if __name__ == "__main__":
 	master = Tk()
