@@ -2,6 +2,11 @@
 
 import numpy as np
 
+# returns rgb-color value as hex-value (web format)
+# rgb has to be a triple (r, g, b)
+def rgb_to_hex(rgb):
+	return "#%02x%02x%02x" % rgb
+
 def vector_length(v):
 	return np.linalg.norm(v)
 		
