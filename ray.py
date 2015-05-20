@@ -64,11 +64,35 @@ class Plane:
 		if d < 0:
 			return np.inf
 		return d
+		
+class Sphere:
+	def __init__(self, center, radius):
+		self.center = np.array(center)
+		self.radius = radius
+	
+	def intersect(self, ray):
+		# line-sphere intersection term from en.wiki.org
+		loc = np.dot(ray.direction, (ray.origin - self.center))
+		oc_length = np.linalg.norm(ray.origin - self.center)
+		# term in sqrt
+		term = loc * loc - oc_length * oc_length + self.radius * self.radius
+		
+		# no solution, because sqrt of less than zero is not defined.
+		if term < 0:
+			return np.inf
+		
+		# sqrt of zero is zero, we dont have to compute it.	
+		if np.abs(term) < 1e-6:
+			return loc * -1
+			
+		return loc * -1 - np.sqrt(term)
 
 
 r = Ray([0, 0, 0], [0, 0, 1])
 p = Plane([0, 0, 5], [0, 0, -1])
+s = Sphere([0, 0, 2], 1)
 print p.intersect(r)
+print s.intersect(r)
 
 
 master = Tk()
