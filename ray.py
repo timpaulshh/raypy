@@ -18,9 +18,12 @@ class Circle:
 class Window:
 	def update(self):
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
-		if self.geometry.intersect(ray) < np.inf:
-			self.img.put(self.geometry.getColorHex(), (self.d[0], self.d[1]))
-		else:
+		pixelIsEmpty = True
+		for obj in self.geometry:
+			if obj.intersect(ray) < np.inf:
+				self.img.put(obj.getColorHex(), (self.d[0], self.d[1]))
+				pixelIsEmpty = False
+		if pixelIsEmpty:
 			self.img.put("#ffffff", (self.d[0], self.d[1]))
 
 	def draw(self):
@@ -64,13 +67,16 @@ if __name__ == "__main__":
 	canvas.create_image((WIDTH / 2, HEIGHT / 2), image=img, state="normal")
 
 	eye = np.array([0, 0, 0])
-	screen = Screen([0, 0, 5], [0, 0, -1], WIDTH, HEIGHT, 0.1)
+	screen = Screen([0, 0, 3], [0, 0, -1], WIDTH, HEIGHT, 0.1)
 
-#	p = Plane([0, 0, 5], [0, 0, -1])
-	s = Sphere([0, 0, 10], 5)
-	s.setColor((200, 0, 0))
+	p = Plane([0, 5, 0], [0, -1, 0])
+	p.setColor((0, 0, 200))
+	s1 = Sphere([0, 0, 10], 5)
+	s1.setColor((200, 0, 0))
+	s2 = Sphere([3, 3, 5], 2)
+	s2.setColor((0, 200, 0))
 
-	window = Window(calculate = [0,0], geometry = s, eye = eye, screen = screen, image = img, master = master)
+	window = Window(calculate = [0,0], geometry = [p, s1, s2], eye = eye, screen = screen, image = img, master = master)
 	window.draw()
 	master.mainloop()
 
