@@ -19,9 +19,9 @@ class Window:
 	def update(self):
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
 		if self.geometry.intersect(ray) < np.inf:
-			self.img.put("#000000", (self.d[0], self.d[1])) 
+			self.img.put(self.geometry.getColorHex(), (self.d[0], self.d[1]))
 		else:
-			self.img.put("#ffffff", (self.d[0], self.d[1])) 
+			self.img.put("#ffffff", (self.d[0], self.d[1]))
 
 	def draw(self):
 		#update image
@@ -68,6 +68,7 @@ if __name__ == "__main__":
 
 #	p = Plane([0, 0, 5], [0, 0, -1])
 	s = Sphere([0, 0, 10], 5)
+	s.setColor((200, 0, 0))
 
 	window = Window(calculate = [0,0], geometry = s, eye = eye, screen = screen, image = img, master = master)
 	window.draw()
