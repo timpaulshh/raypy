@@ -18,6 +18,11 @@ class Ray:
 		self.origin = np.array(origin)
 		self.direction = normalize(np.array(direction))
 
+	def __init__(self, p1, p2):
+		# constructs normalized ray from two points
+		self.origin = np.array(p1)
+		self.direction = normalize(np.array(p2)-np.array(p1))
+
 class Plane:
 	def __init__(self, origin, normal):
 		self.origin = np.array(origin)
@@ -56,7 +61,9 @@ class Sphere:
 
 if __name__ == "__main__":
 	r = Ray([0, 0, 0], [0, 0, 1])
+	r2 = Ray(p1 = [0, 0, 10], p2 = [0, 0, 0])
 	p = Plane([0, 0, 5], [0, 0, -1])
 	s = Sphere([0, 0, 2], 1)
 	print p.intersect(r)
 	print s.intersect(r)
+	print p.intersect(r2)
