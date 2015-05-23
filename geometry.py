@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from abc import ABCMeta, abstractmethod
 import numpy as np
 
 # returns rgb-color value as hex-value (web format)
@@ -23,7 +24,21 @@ class Ray:
 		self.origin = np.array(p1)
 		self.direction = normalize(np.array(p2)-np.array(p1))
 
-class Plane:
+class GeometryObject:
+	__metaclass__ = ABCMeta
+
+	def setColor(self, rgb):
+		self.rgb = rgb
+
+	def getColorHex(self):
+		return rgb_to_hex(self.rgb)
+
+	@abstractmethod
+	def intersect(self, ray):
+		pass
+
+
+class Plane(GeometryObject):
 	def __init__(self, origin, normal):
 		self.origin = np.array(origin)
 		self.normal = normalize(np.array(normal))
@@ -37,7 +52,7 @@ class Plane:
 			return np.inf
 		return d
 
-class Sphere:
+class Sphere(GeometryObject):
 	def __init__(self, center, radius):
 		self.center = np.array(center)
 		self.radius = radius
@@ -64,6 +79,8 @@ if __name__ == "__main__":
 	r2 = Ray(p1 = [0, 0, 10], p2 = [0, 0, 0])
 	p = Plane([0, 0, 5], [0, 0, -1])
 	s = Sphere([0, 0, 2], 1)
+	s.setColor((255, 0, 0))
 	print p.intersect(r)
 	print s.intersect(r)
 	print p.intersect(r2)
+	print s.getColorHex()
