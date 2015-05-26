@@ -72,7 +72,6 @@ if __name__ == "__main__":
 	p = Plane([0, 5, 0], [0, -1, 0])
 	p.setColor((0, 0, 200))
 	s1 = Sphere([0, 0, 10], 5)
-	s1.setColor((200, 0, 0))
 	s2 = Sphere([0, 3, 5], 2)
 	s2.setColor((0, 200, 0))
 

@@ -27,6 +27,9 @@ class Ray:
 class GeometryObject:
 	__metaclass__ = ABCMeta
 
+	def __init__(self, color = (0, 0, 0)):
+		self.rgb = color
+
 	def setColor(self, rgb):
 		self.rgb = rgb
 
@@ -39,6 +42,7 @@ class GeometryObject:
 
 class Plane(GeometryObject):
 	def __init__(self, origin, normal):
+		GeometryObject.__init__(self)
 		self.origin = np.array(origin)
 		self.normal = normalize(np.array(normal))
 
@@ -53,6 +57,7 @@ class Plane(GeometryObject):
 
 class Sphere(GeometryObject):
 	def __init__(self, center, radius):
+		GeometryObject.__init__(self)
 		self.center = np.array(center)
 		self.radius = radius
 	
