@@ -20,9 +20,10 @@ class Window:
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
 		pixelIsEmpty = True
 		for obj in self.geometry:
-			if obj.intersect(ray) < np.inf:
+			if min(obj.intersect(ray)) < np.inf:
 				self.img.put(obj.getColorHex(), (self.d[0], self.d[1]))
 				pixelIsEmpty = False
+
 		if pixelIsEmpty:
 			self.img.put("#ffffff", (self.d[0], self.d[1]))
 
@@ -52,7 +53,6 @@ class Window:
 		self.master = master
 		self.after_id = 0
 
-
 if __name__ == "__main__":
 	master = Tk()
 
@@ -73,11 +73,9 @@ if __name__ == "__main__":
 	p.setColor((0, 0, 200))
 	s1 = Sphere([0, 0, 10], 5)
 	s1.setColor((200, 0, 0))
-	s2 = Sphere([3, 3, 5], 2)
+	s2 = Sphere([0, 3, 5], 2)
 	s2.setColor((0, 200, 0))
 
 	window = Window(calculate = [0,0], geometry = [p, s1, s2], eye = eye, screen = screen, image = img, master = master)
 	window.draw()
 	master.mainloop()
-
-
