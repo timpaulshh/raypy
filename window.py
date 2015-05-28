@@ -27,6 +27,9 @@ class Window(Frame):
 		canvas.create_image((width / 2, height / 2), image=self.img, state="normal")
 		self.startButton = Button(self.master, text="Render", command=lambda: self.__onStartPressed())
 		self.startButton.pack()
+		self.resetButton = Button(self.master, text="Reset", command=lambda: self.__onResetPressed())
+		self.resetButton.config(state="disabled")
+		self.resetButton.pack()
 
 	def __onStartPressed(self):
 		self.startButton.config(state="disabled")
@@ -50,6 +53,13 @@ class Window(Frame):
 				self.d[1] = self.d[1] + 1
 			else:
 				self.master.after_cancel(self.after_id)
+				self.resetButton.config(state="active")
 				return
 
 		self.after_id = self.master.after(0, self.__draw)
+
+	def __onResetPressed(self):
+		self.img.blank()
+		self.d = [0, 0]
+		self.resetButton.config(state="disabled")
+		self.startButton.config(state="active")
