@@ -4,44 +4,10 @@ from Tkinter import *
 
 import numpy as np
 
-from geometry import Ray, Plane, Sphere
-from scene import Screen
-from tracer import SimpleRayTracer, SimpleShadowRayTracer
-
-
-class Window:
-	def __init__(self, calculate, geometry, lights, eye, screen, image, master, tracer=SimpleRayTracer()):
-		self.geometry = geometry
-		self.lights = lights
-		self.eye = eye
-		self.screen = screen
-		self.d = calculate
-		self.img = image
-		self.master = master
-		self.after_id = 0
-		self.tracer = tracer
-
-	def update(self):
-		ray = Ray.fromPoints(p1=self.eye, p2=self.screen.pixelToWorldCoord(self.d))
-		self.img.put(self.tracer.trace(ray, self.geometry, self.lights), (self.d[0], self.d[1]))
-
-	def draw(self):
-		# update image
-		self.update()
-
-		# next self.d
-		if self.d[0] < self.screen.resolutionX:
-			self.d[0] = self.d[0] + 1
-		else:
-			if self.d[1] < self.screen.resolutionY:
-				self.d[0] = 0
-				self.d[1] = self.d[1] + 1
-			else:
-				self.master.after_cancel(self.after_id)
-				return
-
-		self.after_id = self.master.after(1, self.draw)
-
+from geometry import Plane, Sphere
+from scene import Screen, Scene
+from tracer import SimpleShadowRayTracer
+from window import Window
 
 if __name__ == "__main__":
 	master = Tk()
@@ -83,7 +49,7 @@ if __name__ == "__main__":
 	l1 = Sphere([-2, -4.5, 4], 1)
 	l1.setColor((255, 255, 255))
 
-	window = Window(calculate=[0, 0], geometry=[s1, p1, p2, p3, p4, p5, p6], lights=[l1], eye=eye, screen=screen,
-					image=img, master=master, tracer=SimpleShadowRayTracer())
-	window.draw()
+	scene = Scene(eye, screen, geometry=[s1, p1, p2, p3, p4, p5, p6], lights=[l1])
+
+	window = Window(scene, image=img, master=master, tracer=SimpleShadowRayTracer())
 	master.mainloop()

@@ -3,6 +3,19 @@
 from geometry import Plane
 
 
+class Scene:
+	def __init__(self, eye, screen, geometry=None, lights=None):
+		if geometry is None:
+			geometry = []
+
+		if lights is None:
+			lights = []
+
+		self.eye = eye
+		self.screen = screen
+		self.geometry = geometry
+		self.lights = lights
+
 class Screen(Plane):
 	def __init__(self, origin, normal, resolutionX, resolutionY, pixelSizeInWorldCoords):
 		Plane.__init__(self, origin, normal)
