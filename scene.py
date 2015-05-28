@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import numpy as np
 
 from geometry import Plane
 
@@ -11,7 +12,7 @@ class Scene:
 		if lights is None:
 			lights = []
 
-		self.eye = eye
+		self.eye = np.array(eye)
 		self.screen = screen
 		self.geometry = geometry
 		self.lights = lights
