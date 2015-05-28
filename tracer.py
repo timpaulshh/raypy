@@ -33,7 +33,7 @@ class RayTracer:
 class SimpleRayTracer(RayTracer):
 	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
-		if min(nearest.distance) < np.inf:
+		if min(nearest.distances) < np.inf:
 			return nearest.object.getColorHex()
 		else:
 			return "#ffffff"
