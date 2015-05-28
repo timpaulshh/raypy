@@ -49,6 +49,10 @@ class GeometryObject:
 	def intersect(self, ray):
 		pass
 
+	@abstractmethod
+	def normalAt(self, point):
+		pass
+
 
 class Plane(GeometryObject):
 	def __init__(self, origin, normal, color=(0, 0, 0)):
@@ -64,6 +68,9 @@ class Plane(GeometryObject):
 		if d < 0:
 			return [np.inf]
 		return [d]
+
+	def normalAt(self, point):
+		return self.normal
 
 
 class Sphere(GeometryObject):
@@ -88,6 +95,14 @@ class Sphere(GeometryObject):
 			return [loc * -1]
 
 		return [loc * -1 - np.sqrt(term), loc * -1 + np.sqrt(term)]
+
+	def normalAt(self, point):
+		#    N = ((x - cx)/R, (y - cy)/R, (z - cz)/R)
+		nx = (point[0] - self.center[0]) / self.radius
+		ny = (point[1] - self.center[1]) / self.radius
+		nz = (point[2] - self.center[2]) / self.radius
+
+		return np.array([nx, ny, nz])
 
 
 if __name__ == "__main__":

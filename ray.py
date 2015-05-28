@@ -19,9 +19,12 @@ if __name__ == "__main__":
 	p6 = Plane([0, 0, -5], [0, 0, 1], (255, 255, 255))
 
 	s1 = Sphere([0, 3, 2], 2, (255, 255, 0))
+	s2 = Sphere([4, 2, 1], 0.5, (255, 255, 255))
 
 	l1 = Sphere([-2, -4.5, 4], 1, (255, 255, 255))
 
-	scene = Scene(eye=[0, 0, -4.9], screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6], lights=[l1])
+	eye = [0, 0, -4.9]
+
+	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2], lights=[l1])
 
 	window = Window(WIDTH, HEIGHT, scene, tracer=SimpleShadowRayTracer())
