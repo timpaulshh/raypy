@@ -6,10 +6,10 @@ from tracer import SimpleShadowRayTracer
 from window import Window
 
 if __name__ == "__main__":
-	WIDTH = 100
-	HEIGHT = 100
+	WIDTH = 200
+	HEIGHT = 200
 
-	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, 0.1)
+	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, 0.05)
 
 	p1 = Plane([0, 5, 0], [0, -1, 0], (0, 0, 200))
 	p2 = Plane([0, -5, 0], [0, 1, 0], (100, 100, 100))
@@ -22,6 +22,6 @@ if __name__ == "__main__":
 
 	l1 = Sphere([-2, -4.5, 4], 1, (255, 255, 255))
 
-	scene = Scene(eye=[0, 0, -4], screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6], lights=[l1])
+	scene = Scene(eye=[0, 0, -4.9], screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6], lights=[l1])
 
 	window = Window(WIDTH, HEIGHT, scene, tracer=SimpleShadowRayTracer())

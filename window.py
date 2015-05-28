@@ -25,22 +25,19 @@ class Window(Frame):
 		canvas.pack()
 		self.img = PhotoImage(width=width, height=height)
 		canvas.create_image((width / 2, height / 2), image=self.img, state="normal")
-		self.startButton = Button(self.master, text="Render", command=lambda: self.__onStartPressed(1))
+		self.startButton = Button(self.master, text="Render", command=lambda: self.__onStartPressed())
 		self.startButton.pack()
 
-		self.instantly = Button(self.master, text="Render instantly", command=lambda: self.__onStartPressed(0))
-		self.instantly.pack()
-
-	def __onStartPressed(self, delay):
+	def __onStartPressed(self):
 		self.startButton.config(state="disabled")
-		self.instantly.config(state="disabled")
-		self.__draw(delay)
+		self.__draw()
 
 	def __update(self):
 		ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
 		self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights), (self.d[0], self.d[1]))
+		self.master.update()
 
-	def __draw(self, delay):
+	def __draw(self):
 		# update image
 		self.__update()
 
@@ -55,4 +52,4 @@ class Window(Frame):
 				self.master.after_cancel(self.after_id)
 				return
 
-		self.after_id = self.master.after(delay, self.__draw, delay)
+		self.after_id = self.master.after(0, self.__draw)
