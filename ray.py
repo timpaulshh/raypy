@@ -43,8 +43,8 @@ class Window:
 if __name__ == "__main__":
 	master = Tk()
 
-	WIDTH = 300
-	HEIGHT = 300
+	WIDTH = 100
+	HEIGHT = 100
 
 	canvas = Canvas(master, width=WIDTH, height=HEIGHT)
 	canvas.pack()
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 	canvas.create_image((WIDTH / 2, HEIGHT / 2), image=img, state="normal")
 
 	eye = np.array([0, 0, -4])
-	screen = Screen([0, 0, 0], [0, 0, -1], WIDTH, HEIGHT, 0.1)
+	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, 0.1)
 
 	p1 = Plane([0, 5, 0], [0, -1, 0])
 	p1.setColor((0, 0, 200))
@@ -75,10 +75,10 @@ if __name__ == "__main__":
 	p6.setColor((255, 255, 255))
 	
 	
-	s1 = Sphere([2, 2, 2], 3)
+	s1 = Sphere([0, 3, 2], 2)
 	s1.setColor((255, 255, 0))
 
-	l1 = Sphere([0, -4.5, -2], 1)
+	l1 = Sphere([-2, -4.5, 4], 1)
 	l1.setColor((255, 255, 255))
 
 	window = Window(calculate = [0,0], geometry = [s1, p1, p2, p3, p4, p5, p6], lights = [l1], eye = eye, screen = screen, image = img, master = master, tracer = SimpleShadowRayTracer())

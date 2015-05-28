@@ -41,20 +41,23 @@ class SimpleShadowRayTracer(RayTracer):
 
 		intersection = ray.origin + min(nearest.distances) * ray.direction
 
-		sr = 0
-		sg = 0
-		sb = 0
+		sr = 50
+		sg = 50
+		sb = 50
 
 		for light in lights:
 			shadowRay = Ray(p1 = intersection, p2 = light.center)
 			s_distances = self.distances(objects, shadowRay)
 
-			if min(s_distances[0].distances) < 0.01:
-				shadownearest = s_distances[1]			
+			if min(s_distances[0].distances) < 0.5:
+				if len(s_distances[0].distances) == 1:
+					shadownearest = min(s_distances[1].distances)
+				else:
+					shadownearest = s_distances[0].distances[1]
 			else:
-				shadownearest = s_distances[0]
+				shadownearest = min(s_distances[0].distances)
 
-			if min(shadownearest.distances) > min(self.distances([light], shadowRay)[0].distances):
+			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
 				sr = min(sr + light.getColor()[0], 255)
 				sg = min(sg + light.getColor()[1], 255)
 				sb = min(sb + light.getColor()[2], 255)
