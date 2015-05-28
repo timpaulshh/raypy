@@ -1,3 +1,4 @@
+
 #!/usr/bin/python
 
 from abc import ABCMeta, abstractmethod
@@ -32,6 +33,9 @@ class GeometryObject:
 
 	def setColor(self, rgb):
 		self.rgb = rgb
+
+	def getColor(self):
+		return self.rgb
 
 	def getColorHex(self):
 		return rgb_to_hex(self.rgb)

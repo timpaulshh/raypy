@@ -5,11 +5,12 @@ import math
 import numpy as np
 from geometry import Ray, Plane, Sphere
 from scene import Screen
-from tracer import SimpleRayTracer
+from tracer import SimpleRayTracer, SimpleShadowRayTracer
 
 class Window:
-	def __init__(self, calculate, geometry, eye, screen, image, master, tracer = SimpleRayTracer()):
+	def __init__(self, calculate, geometry, lights, eye, screen, image, master, tracer = SimpleRayTracer()):
 		self.geometry = geometry
+		self.lights = lights
 		self.eye = eye
 		self.screen = screen
 		self.d = calculate
@@ -20,7 +21,7 @@ class Window:
 	
 	def update(self):
 		ray = Ray(p1 = self.eye, p2 = self.screen.pixelToWorldCoord(self.d))
-		self.img.put(self.tracer.trace(ray, self.geometry), (self.d[0], self.d[1]))
+		self.img.put(self.tracer.trace(ray, self.geometry, self.lights), (self.d[0], self.d[1]))
 
 	def draw(self):
 		#update image
@@ -42,8 +43,8 @@ class Window:
 if __name__ == "__main__":
 	master = Tk()
 
-	WIDTH = 100
-	HEIGHT = 100
+	WIDTH = 300
+	HEIGHT = 300
 
 	canvas = Canvas(master, width=WIDTH, height=HEIGHT)
 	canvas.pack()
@@ -74,9 +75,12 @@ if __name__ == "__main__":
 	p6.setColor((255, 255, 255))
 	
 	
-	s1 = Sphere([0, 3, 0], 1)
+	s1 = Sphere([2, 2, 2], 3)
 	s1.setColor((255, 255, 0))
 
-	window = Window(calculate = [0,0], geometry = [s1, p1, p2, p3, p4, p5, p6], eye = eye, screen = screen, image = img, master = master)
+	l1 = Sphere([0, -4.5, -2], 1)
+	l1.setColor((255, 255, 255))
+
+	window = Window(calculate = [0,0], geometry = [s1, p1, p2, p3, p4, p5, p6], lights = [l1], eye = eye, screen = screen, image = img, master = master, tracer = SimpleShadowRayTracer())
 	window.draw()
 	master.mainloop()
