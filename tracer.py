@@ -1,13 +1,17 @@
 #!/usr/bin/python
 
 from abc import ABCMeta, abstractmethod
+
 import numpy as np
+
 from geometry import rgb_to_hex, Ray
+
 
 class DistanceObject:
 	def __init__(self, distances, obj):
 		self.distances = distances
 		self.object = obj
+
 
 class RayTracer:
 	__metaclass__ = ABCMeta
@@ -15,7 +19,7 @@ class RayTracer:
 	# returns a sorted list of tuples (distance, object)
 	def distances(self, objects, ray):
 		return sorted(list(self.__distancesgen(objects, ray)), key=lambda x: min(x.distances))
-			
+
 	def __distancesgen(self, objects, ray):
 		for obj in objects:
 			yield DistanceObject(obj.intersect(ray), obj)
@@ -24,13 +28,15 @@ class RayTracer:
 	def trace(self, ray, objects, lights):
 		pass
 
+
 class SimpleRayTracer(RayTracer):
-	def trace(self, ray, objects, lights = []):
+	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
 		if min(nearest.distance) < np.inf:
 			return nearest.object.getColorHex()
 		else:
 			return "#ffffff"
+
 
 class SimpleShadowRayTracer(RayTracer):
 	def trace(self, ray, objects, lights):
@@ -46,7 +52,7 @@ class SimpleShadowRayTracer(RayTracer):
 		sb = 50
 
 		for light in lights:
-			shadowRay = Ray(p1 = intersection, p2 = light.center)
+			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
 			s_distances = self.distances(objects, shadowRay)
 
 			if min(s_distances[0].distances) < 0.5:
