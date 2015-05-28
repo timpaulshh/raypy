@@ -2,7 +2,7 @@
 
 from geometry import Plane, Sphere
 from scene import Screen, Scene
-from tracer import SimpleShadowRayTracer
+from tracer import SimpleRayTracer
 from window import Window
 
 if __name__ == "__main__":
@@ -27,4 +27,4 @@ if __name__ == "__main__":
 
 	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2], lights=[l1])
 
-	window = Window(WIDTH, HEIGHT, scene, tracer=SimpleShadowRayTracer())
+	window = Window(WIDTH, HEIGHT, scene, tracer=SimpleRayTracer())
