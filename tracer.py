@@ -96,7 +96,7 @@ class ShadingShadowRayTracer(RayTracer):
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
 			s_distances = self.distances(objects, shadowRay)
 
-			if min(s_distances[0].distances) < 0.5:
+			if min(s_distances[0].distances) < 0.1:
 				shadownearest = min(s_distances[1].distances)
 			else:
 				shadownearest = min(s_distances[0].distances)
@@ -119,17 +119,21 @@ class ShadingShadowRayTracer(RayTracer):
 		# phong-blinn shading
 
 		# ambient
-		ambient = np.array([0, 0, 0])
+		ambient = np.array([20, 20, 20])
 
 		# diffuse
 		L = shadowRay.direction
 		cos_delta = np.dot(L, intersector.normalAt(intersection))
-		diffuse = incoming * 0.5 * cos_delta
+		if (cos_delta) < 0:
+			cos_delta = 0
+		diffuse = incoming * 0.8 * cos_delta
 
 		# specular (blinn)
 		V = Ray.fromPoints(intersection, self.eye).direction
 		H = normalize(V + L)
 		cos_theta = np.dot(intersector.normalAt(intersection), H)
+		if cos_theta < 0:
+			cos_theta = 0
 		specular = incoming * 0.1 * math.pow(cos_theta, 1)
 
 		return ambient + diffuse + specular
