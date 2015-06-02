@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from geometry import Ray, normalize
-from color import Color, WHITE
+from material import Color, WHITE
 
 
 class DistanceObject:
