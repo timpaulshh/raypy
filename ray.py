@@ -22,7 +22,7 @@ if __name__ == "__main__":
 	s1 = Sphere([0, 3, 2], 2, Material(Color(255, 255, 0), 0.5, 0.8, 0.2))
 	s2 = Sphere([4, 2, 1], 0.5, Material(Color(255, 255, 255), 0.5, 0.8, 0.2))
 
-	l1 = Sphere([2, -4.5, 4], 1, Material(Color(255, 255, 255), 0.5, 0.2, 0.2))
+	l1 = Sphere([0, -4, 0], 1, Material(Color(255, 255, 255), 0.5, 0.2, 0.2))
 
 	eye = [0, 0, -4.9]
 

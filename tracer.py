@@ -10,8 +10,8 @@ from material import Color, WHITE
 
 
 class DistanceObject:
-	def __init__(self, distances, obj):
-		self.distances = distances
+	def __init__(self, distance, obj):
+		self.distance = distance
 		self.object = obj
 
 
@@ -20,11 +20,13 @@ class RayTracer:
 
 	# returns a sorted list of tuples (distance, object)
 	def distances(self, objects, ray):
-		return sorted(list(self.__distancesgen(objects, ray)), key=lambda x: min(x.distances))
+		return sorted(list(self.__distancesgen(objects, ray)), key=lambda x: x.distance)
 
 	def __distancesgen(self, objects, ray):
 		for obj in objects:
-			yield DistanceObject(obj.intersect(ray), obj)
+			intersections = obj.intersect(ray)
+			for intersection in intersections:
+				yield DistanceObject(intersection, obj)
 
 	@abstractmethod
 	def trace(self, ray, objects, lights):
@@ -32,45 +34,59 @@ class RayTracer:
 
 
 class SimpleRayTracer(RayTracer):
+	def shading(self, intersection, intersector, shadowRay, incoming):
+		return intersector.getColor()
+
 	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
-		if min(nearest.distances) < np.inf:
-			return nearest.object.getColor()
+		if nearest.distance < np.inf:
+			return self.shading(None, nearest.object, None, lights)
 		else:
 			return WHITE
 
 
 class SimpleShadowRayTracer(RayTracer):
-	def trace(self, ray, objects, lights):
-		nearest = self.distances(objects, ray)[0]
+	def shading(self, intersection, intersector, shadowRay, incoming):
+		ambient = intersector.getColor() * intersector.material.ambient
+		diffuse = intersector.getColor() * intersector.material.diffuse
+		specular = intersector.getColor() * intersector.material.specular
 
-		if (min(nearest.distances) == np.inf):
+		return ambient + diffuse + specular
+
+	def trace(self, ray, objects, lights):
+		distances = self.distances(objects, ray)
+		nearest = distances[0]
+
+		# nothing is hit.
+		if nearest.distance == np.inf:
 			return WHITE.toHex()
 
-		intersection = ray.origin + min(nearest.distances) * ray.direction
+		# ambient color of nearest
+		C = nearest.object.getColor() * nearest.object.material.ambient
 
-		S = Color(50, 50, 50)
+		intersection = ray.origin + nearest.distance * ray.direction
 
 		for light in lights:
+			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			s_distances = self.distances(objects, shadowRay)
 
-			if np.abs(min(s_distances[0].distances)) < 0.5:
-				if len(s_distances[0].distances) == 1:
-					shadownearest = min(s_distances[1].distances)
-				else:
-					shadownearest = s_distances[0].distances[1]
+			shadowDistances = self.distances(objects, shadowRay)
+
+			# if the distance is too low, it is most likely an intersection with the intersection
+			# thanks to floating point inaccuracy.
+			if shadowDistances[0].distance < 0.1:
+				shadowNearest = shadowDistances[1]  # why the fuck does this not work?!
 			else:
-				shadownearest = min(s_distances[0].distances)
+				shadowNearest = shadowDistances[0]
 
-			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
-				S = S + light.getColor()
+			lightDistance = self.distances([light], shadowRay)[0].distance
 
-		r = min(S.r, nearest.object.getColor().r)
-		g = min(S.g, nearest.object.getColor().g)
-		b = min(S.b, nearest.object.getColor().b)
+			# if the nearest intersection is in a higher or equal distance to the light, than
+			# the distance from this point to the light, then there is nothing in between.
+			if shadowNearest.distance >= lightDistance:
+				C = self.shading(intersection, nearest.object, shadowRay, light.getColor())
 
-		return Color(r, g, b)
+		return C
 
 
 class ShadingShadowRayTracer(RayTracer):
@@ -78,30 +94,41 @@ class ShadingShadowRayTracer(RayTracer):
 		self.eye = eye
 
 	def trace(self, ray, objects, lights):
-		nearest = self.distances(objects, ray)[0]
+		distances = self.distances(objects, ray)
+		nearest = distances[0]
 
-		if (min(nearest.distances) == np.inf):
-			return "#ffffff"
+		# nothing is hit.
+		if nearest.distance == np.inf:
+			return WHITE.toHex()
 
-		intersection = ray.origin + min(nearest.distances) * ray.direction
+		# ambient color of nearest
+		C = nearest.object.getColor() * nearest.object.material.ambient
 
-		S = Color(20, 20, 20)
+		intersection = ray.origin + nearest.distance * ray.direction
 
 		for light in lights:
+			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			s_distances = self.distances(objects, shadowRay)
 
-			if min(s_distances[0].distances) < 0.1:
-				shadownearest = min(s_distances[1].distances)
+			shadowDistances = self.distances(objects, shadowRay)
+
+			# if the distance is too low, it is most likely an intersection with the intersection
+			# thanks to floating point inaccuracy.
+			if shadowDistances[0].distance < 0.1:
+				shadowNearest = shadowDistances[2]  # this still is not correct. wtf does it not work with index 1?!
 			else:
-				shadownearest = min(s_distances[0].distances)
+				shadowNearest = shadowDistances[0]
 
-			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
-				S = self.shading(intersection, nearest.object, shadowRay, light.getColor())
+			lightDistance = self.distances([light], shadowRay)[0].distance
 
-		r = min(abs(S.r), nearest.object.getColor().r)
-		g = min(abs(S.g), nearest.object.getColor().g)
-		b = min(abs(S.b), nearest.object.getColor().b)
+			# if the nearest intersection is in a higher or equal distance to the light, than
+			# the distance from this point to the light, then there is nothing in between.
+			if shadowNearest.distance > lightDistance:
+				C = self.shading(intersection, nearest.object, shadowRay, light.getColor())
+
+		r = min(C.r, nearest.object.getColor().r)
+		g = min(C.g, nearest.object.getColor().g)
+		b = min(C.b, nearest.object.getColor().b)
 
 		return Color(r, g, b)
 
@@ -114,7 +141,7 @@ class ShadingShadowRayTracer(RayTracer):
 		# diffuse
 		L = shadowRay.direction
 		cos_delta = np.dot(L, intersector.normalAt(intersection))
-		if (cos_delta) < 0:
+		if cos_delta < 0:
 			cos_delta = 0
 		diffuse = incoming * intersector.material.diffuse * cos_delta
 
@@ -130,31 +157,33 @@ class ShadingShadowRayTracer(RayTracer):
 
 
 class RecursiveRayTracer(RayTracer):
-	Simple = SimpleRayTracer()
+	MAX_DEPTH = 5
 
 	def trace(self, ray, objects, lights):
 		return self.recursiveTrace(ray, objects, lights, 0)
 
 	def recursiveTrace(self, ray, objects, lights, depth):
-		if depth > 5:
-			return Color(0, 0, 0)
+		if depth > self.MAX_DEPTH:
+			return WHITE
 
 		nearest = self.distances(objects, ray)[0]
 
-		if min(nearest.distances) == np.inf:
-			print "hello"
-			return Color(0, 0, 0)
+		if nearest.distance == np.inf:
+			return WHITE
 
-		intersection = ray.origin + min(nearest.distances) * ray.direction
+		intersection = ray.origin + nearest.distance * ray.direction
 		C = self.accLightSources(intersection, nearest.object, objects, lights)
 
 		# recursive reflection computation.
 		if nearest.object.material.specular > 0:
 			N = nearest.object.normalAt(intersection)
-			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N 
-			reflection = Ray.fromPoints(p1 = intersection, p2 = reflectionRayDirection)
+			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N
+			reflection = Ray(intersection, reflectionRayDirection)
 
-			C = C + (self.recursiveTrace(reflection, objects, lights, depth + 1) * nearest.object.material.specular)
+			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
+			recursiveValue = recursiveValue * nearest.object.material.specular
+
+			C = C + recursiveValue
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -167,17 +196,16 @@ class RecursiveRayTracer(RayTracer):
 
 		for light in lights:
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			s_distances = self.distances(objects, shadowRay)
+			shadowDistances = self.distances(objects, shadowRay)
 
-			if np.abs(min(s_distances[0].distances)) < 0.5:
-				if len(s_distances[0].distances) == 1:
-					shadownearest = min(s_distances[1].distances)
-				else:
-					shadownearest = s_distances[0].distances[1]
+			# if the distance is too low, it is most likely an intersection with the intersection
+			# thanks to floating point inaccuracy.
+			if shadowDistances[0].distance < 0.1:
+				shadowNearest = shadowDistances[2]  # why the fuck does this not work with 1?!
 			else:
-				shadownearest = min(s_distances[0].distances)
+				shadowNearest = shadowDistances[0]
 
-			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
+			if shadowNearest > self.distances([light], shadowRay)[0].distance:
 				C = C + light.getColor()
 
 		r = min(C.r, intersector.getColor().r)
@@ -185,9 +213,3 @@ class RecursiveRayTracer(RayTracer):
 		b = min(C.b, intersector.getColor().b)
 
 		return Color(r, g, b)
-
-
-
-
-
-
