@@ -89,6 +89,7 @@ class SimpleShadowRayTracer(RayTracer):
 		return C
 
 
+# @todo: still is not stable for more than one light-source
 class ShadingShadowRayTracer(RayTracer):
 	def __init__(self, eye):
 		self.eye = eye
