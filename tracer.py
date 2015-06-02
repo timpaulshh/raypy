@@ -5,7 +5,7 @@ import math
 
 import numpy as np
 
-from geometry import rgb_to_hex, Ray, normalize
+from geometry import Ray, normalize
 from color import Color
 
 
@@ -71,7 +71,7 @@ class SimpleShadowRayTracer(RayTracer):
 		g = min(S.g, nearest.object.getColor().g)
 		b = min(S.b, nearest.object.getColor().b)
 
-		return rgb_to_hex((r, g, b))
+		return Color(r, g, b).toHex()
 
 
 class ShadingShadowRayTracer(RayTracer):
@@ -106,7 +106,7 @@ class ShadingShadowRayTracer(RayTracer):
 		g = min(abs(S.g), nearest.object.getColor().g)
 		b = min(abs(S.b), nearest.object.getColor().b)
 
-		return rgb_to_hex((r, g, b))
+		return Color(r, g, b).toHex()
 
 	def shading(self, intersection, intersector, shadowRay, incoming):
 		# phong-blinn shading

@@ -18,6 +18,9 @@ class Color:
 
 		return Color(r, g, b)
 
+	def toHex(self):
+		return "#%02x%02x%02x" % (self.r, self.g, self.b)
+
 
 if __name__ == "__main__":
 	a = Color(100, 100, 100)
