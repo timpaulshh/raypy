@@ -1,7 +1,7 @@
 # !/usr/bin/python
 
 from abc import ABCMeta, abstractmethod
-from color import Color
+from material import Material, Color
 
 import numpy as np
 
@@ -27,17 +27,19 @@ class Ray:
 class GeometryObject:
 	__metaclass__ = ABCMeta
 
-	def __init__(self, color):
-		self.rgb = color
+	def __init__(self, material):
+		if material is None:
+			material = Material(Color(0, 0, 0), 0, 0)
+		self.material = material
 
-	def setColor(self, rgb):
-		self.rgb = rgb
+	def setColor(self, color):
+		self.material.color = color
 
 	def getColor(self):
-		return self.rgb
+		return self.material.color
 
 	def getColorHex(self):
-		return self.rgb.toHex()
+		return self.material.color.toHex()
 
 	@abstractmethod
 	def intersect(self, ray):
@@ -49,8 +51,8 @@ class GeometryObject:
 
 
 class Plane(GeometryObject):
-	def __init__(self, origin, normal, color=(0, 0, 0)):
-		GeometryObject.__init__(self, color)
+	def __init__(self, origin, normal, material = None):
+		GeometryObject.__init__(self, material)
 		self.origin = np.array(origin)
 		self.normal = normalize(np.array(normal))
 
@@ -68,8 +70,8 @@ class Plane(GeometryObject):
 
 
 class Sphere(GeometryObject):
-	def __init__(self, center, radius, color=(0, 0, 0)):
-		GeometryObject.__init__(self, color)
+	def __init__(self, center, radius, material = None):
+		GeometryObject.__init__(self, material)
 		self.center = np.array(center)
 		self.radius = radius
 

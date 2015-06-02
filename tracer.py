@@ -109,14 +109,14 @@ class ShadingShadowRayTracer(RayTracer):
 		# phong-blinn shading
 
 		# ambient
-		ambient = Color(10, 10, 10)
+		ambient = Color(255, 255, 255) * intersector.material.ambient
 
 		# diffuse
 		L = shadowRay.direction
 		cos_delta = np.dot(L, intersector.normalAt(intersection))
 		if (cos_delta) < 0:
 			cos_delta = 0
-		diffuse = incoming * 0.5 * cos_delta
+		diffuse = incoming * intersector.material.diffuse * cos_delta
 
 		# specular (blinn)
 		V = Ray.fromPoints(intersection, self.eye).direction
@@ -124,6 +124,6 @@ class ShadingShadowRayTracer(RayTracer):
 		cos_theta = np.dot(intersector.normalAt(intersection), H)
 		if cos_theta < 0:
 			cos_theta = 0
-		specular = incoming * 0.5 * math.pow(cos_theta, 10)
+		specular = incoming * intersector.material.specular * math.pow(cos_theta, 10)
 
 		return ambient + diffuse + specular
