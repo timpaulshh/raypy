@@ -1,22 +1,27 @@
+import numpy as np
+
 class Color:
-	def __init__(self,r ,g , b):
-		self.r = r
-		self.g = g
-		self.b = b
+	def __init__(self, r, g, b):
+		self.rgb = np.clip(np.array([r, g, b]), 0, 255)
+		self.r = self.rgb[0]
+		self.g = self.rgb[1]
+		self.b = self.rgb[2]
+
+	@classmethod
+	def fromNp(cls, array):
+		return cls(array[0], array[1], array[2])
 
 	def __add__(self, other):
-		r = min(self.r + other.r, 255)
-		g = min(self.g + other.g, 255)
-		b = min(self.b + other.b, 255)
-
-		return Color(r, g, b)
+		return Color.fromNp(self.rgb + other.rgb)
 
 	def __sub__(self, other):
-		r = max(self.r - other.r, 0)
-		g = max(self.g - other.g, 0)
-		b = max(self.b - other.b, 0)
+		return Color.fromNp(self.rgb - other.rgb)
 
-		return Color(r, g, b)
+	def __mul__(self, scalar):
+		return Color.fromNp(self.rgb * scalar)
+
+	def __div__(self, scalar):
+		return Color.fromNp(self.rgb / scalar)
 
 	def toHex(self):
 		return "#%02x%02x%02x" % (self.r, self.g, self.b)
@@ -45,3 +50,13 @@ if __name__ == "__main__":
 	assert(e.r == 0)
 	assert(e.g == 0)
 	assert(e.b == 0)
+
+	f = Color(10, 10, 10) * 5
+	assert(f.r == 50)
+	assert(f.g == 50)
+	assert(f.b == 50)
+
+	g = Color(50, 50, 50) / 5
+	assert(g.r == 10)
+	assert(g.g == 10)
+	assert(g.b == 10)
