@@ -6,6 +6,7 @@ import math
 import numpy as np
 
 from geometry import rgb_to_hex, Ray, normalize
+from color import Color
 
 
 class DistanceObject:
@@ -48,9 +49,7 @@ class SimpleShadowRayTracer(RayTracer):
 
 		intersection = ray.origin + min(nearest.distances) * ray.direction
 
-		sr = 50
-		sg = 50
-		sb = 50
+		S = Color(50, 50, 50)
 
 		for light in lights:
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
@@ -65,13 +64,12 @@ class SimpleShadowRayTracer(RayTracer):
 				shadownearest = min(s_distances[0].distances)
 
 			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
-				sr = min(sr + light.getColor()[0], 255)
-				sg = min(sg + light.getColor()[1], 255)
-				sb = min(sb + light.getColor()[2], 255)
+				S = S + light.getColor()
 
-		r = min(abs(sr), nearest.object.getColor()[0])
-		g = min(abs(sg), nearest.object.getColor()[1])
-		b = min(abs(sb), nearest.object.getColor()[2])
+
+		r = min(S.r, nearest.object.getColor().r)
+		g = min(S.g, nearest.object.getColor().g)
+		b = min(S.b, nearest.object.getColor().b)
 
 		return rgb_to_hex((r, g, b))
 
@@ -88,9 +86,7 @@ class ShadingShadowRayTracer(RayTracer):
 
 		intersection = ray.origin + min(nearest.distances) * ray.direction
 
-		sr = 20
-		sg = 20
-		sb = 20
+		S = Color(20, 20, 20)
 
 		for light in lights:
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
@@ -102,16 +98,13 @@ class ShadingShadowRayTracer(RayTracer):
 				shadownearest = min(s_distances[0].distances)
 
 			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
-				lightPower = np.array([light.getColor()[0], light.getColor()[1], light.getColor()[2]])
+				lightPower = np.array([light.getColor().r, light.getColor().g, light.getColor().b])
 				temp = self.shading(intersection, nearest.object, shadowRay, lightPower)
+				S = Color(temp[0], temp[1], temp[2])
 
-				sr = temp[0]
-				sg = temp[1]
-				sb = temp[2]
-
-		r = min(abs(sr), nearest.object.getColor()[0])
-		g = min(abs(sg), nearest.object.getColor()[1])
-		b = min(abs(sb), nearest.object.getColor()[2])
+		r = min(abs(S.r), nearest.object.getColor().r)
+		g = min(abs(S.g), nearest.object.getColor().g)
+		b = min(abs(S.b), nearest.object.getColor().b)
 
 		return rgb_to_hex((r, g, b))
 

@@ -1,6 +1,7 @@
 # !/usr/bin/python
 
 from abc import ABCMeta, abstractmethod
+from color import Color
 
 import numpy as np
 
@@ -43,7 +44,7 @@ class GeometryObject:
 		return self.rgb
 
 	def getColorHex(self):
-		return rgb_to_hex(self.rgb)
+		return rgb_to_hex((self.rgb.r, self.rgb.g, self.rgb.b))
 
 	@abstractmethod
 	def intersect(self, ray):
@@ -110,7 +111,7 @@ if __name__ == "__main__":
 	r2 = Ray.fromPoints(p1=[0, 0, 10], p2=[0, 0, 0])
 	p = Plane([0, 0, 5], [0, 0, -1])
 	s = Sphere([0, 0, 2], 1)
-	s.setColor((255, 0, 0))
+	s.setColor(Color(255, 0, 0))
 	print p.intersect(r)
 	print s.intersect(r)
 	print p.intersect(r2)
