@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from geometry import Ray, normalize
-from color import Color
+from color import Color, WHITE
 
 
 class DistanceObject:
@@ -37,7 +37,7 @@ class SimpleRayTracer(RayTracer):
 		if min(nearest.distances) < np.inf:
 			return nearest.object.getColorHex()
 		else:
-			return "#ffffff"
+			return WHITE.toHex()
 
 
 class SimpleShadowRayTracer(RayTracer):
@@ -45,7 +45,7 @@ class SimpleShadowRayTracer(RayTracer):
 		nearest = self.distances(objects, ray)[0]
 
 		if (min(nearest.distances) == np.inf):
-			return "#ffffff"
+			return WHITE.toHex()
 
 		intersection = ray.origin + min(nearest.distances) * ray.direction
 
@@ -65,7 +65,6 @@ class SimpleShadowRayTracer(RayTracer):
 
 			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
 				S = S + light.getColor()
-
 
 		r = min(S.r, nearest.object.getColor().r)
 		g = min(S.g, nearest.object.getColor().g)
@@ -98,9 +97,7 @@ class ShadingShadowRayTracer(RayTracer):
 				shadownearest = min(s_distances[0].distances)
 
 			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
-				lightPower = np.array([light.getColor().r, light.getColor().g, light.getColor().b])
-				temp = self.shading(intersection, nearest.object, shadowRay, lightPower)
-				S = Color(temp[0], temp[1], temp[2])
+				S = self.shading(intersection, nearest.object, shadowRay, light.getColor())
 
 		r = min(abs(S.r), nearest.object.getColor().r)
 		g = min(abs(S.g), nearest.object.getColor().g)
@@ -112,7 +109,7 @@ class ShadingShadowRayTracer(RayTracer):
 		# phong-blinn shading
 
 		# ambient
-		ambient = np.array([10, 10, 10])
+		ambient = Color(10, 10, 10)
 
 		# diffuse
 		L = shadowRay.direction

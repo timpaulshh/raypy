@@ -26,6 +26,8 @@ class Color:
 	def toHex(self):
 		return "#%02x%02x%02x" % (self.r, self.g, self.b)
 
+WHITE = Color(255, 255, 255)
+
 
 if __name__ == "__main__":
 	a = Color(100, 100, 100)
