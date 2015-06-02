@@ -2,7 +2,7 @@ from Tkconstants import TOP, RIGHT, LEFT, END
 from Tkinter import Button, PhotoImage, Canvas, Frame, Listbox
 
 from geometry import Ray
-from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTracer
+from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTracer, RecursiveRayTracer
 
 
 class Window(Frame):
@@ -33,9 +33,9 @@ class Window(Frame):
 		self.resetButton.config(state="disabled")
 		self.resetButton.pack(side=RIGHT)
 
-		self.listbox = Listbox(self.master, height=3)
+		self.listbox = Listbox(self.master, height=4)
 		self.listbox.bind('<<ListboxSelect>>', self.__selectTracer)
-		self.listbox.insert(END, "Simple", "Shadow", "ShadingShadow")
+		self.listbox.insert(END, "Simple", "Shadow", "ShadingShadow", "Recursive")
 		self.listbox.pack(side=LEFT)
 
 		self.listbox.selection_set(0)
@@ -50,6 +50,8 @@ class Window(Frame):
 			self.tracer = SimpleShadowRayTracer()
 		elif value == "ShadingShadow":
 			self.tracer = ShadingShadowRayTracer(self.scene.eye)
+		elif value == "Recursive":
+			self.tracer = RecursiveRayTracer()
 
 	def __onStartPressed(self):
 		self.startButton.config(state="disabled")
@@ -58,7 +60,7 @@ class Window(Frame):
 
 	def __update(self):
 		ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
-		self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights), (self.d[0], self.d[1]))
+		self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (self.d[0], self.d[1]))
 		self.master.update()
 
 	def __draw(self):

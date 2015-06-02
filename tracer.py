@@ -35,9 +35,9 @@ class SimpleRayTracer(RayTracer):
 	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
 		if min(nearest.distances) < np.inf:
-			return nearest.object.getColorHex()
+			return nearest.object.getColor()
 		else:
-			return WHITE.toHex()
+			return WHITE
 
 
 class SimpleShadowRayTracer(RayTracer):
@@ -70,7 +70,7 @@ class SimpleShadowRayTracer(RayTracer):
 		g = min(S.g, nearest.object.getColor().g)
 		b = min(S.b, nearest.object.getColor().b)
 
-		return Color(r, g, b).toHex()
+		return Color(r, g, b)
 
 
 class ShadingShadowRayTracer(RayTracer):
@@ -103,13 +103,13 @@ class ShadingShadowRayTracer(RayTracer):
 		g = min(abs(S.g), nearest.object.getColor().g)
 		b = min(abs(S.b), nearest.object.getColor().b)
 
-		return Color(r, g, b).toHex()
+		return Color(r, g, b)
 
 	def shading(self, intersection, intersector, shadowRay, incoming):
 		# phong-blinn shading
 
 		# ambient
-		ambient = Color(255, 255, 255) * intersector.material.ambient
+		ambient = intersector.getColor() * intersector.material.ambient
 
 		# diffuse
 		L = shadowRay.direction
@@ -127,3 +127,67 @@ class ShadingShadowRayTracer(RayTracer):
 		specular = incoming * intersector.material.specular * math.pow(cos_theta, 10)
 
 		return ambient + diffuse + specular
+
+
+class RecursiveRayTracer(RayTracer):
+	Simple = SimpleRayTracer()
+
+	def trace(self, ray, objects, lights):
+		return self.recursiveTrace(ray, objects, lights, 0)
+
+	def recursiveTrace(self, ray, objects, lights, depth):
+		if depth > 5:
+			return Color(0, 0, 0)
+
+		nearest = self.distances(objects, ray)[0]
+
+		if min(nearest.distances) == np.inf:
+			print "hello"
+			return Color(0, 0, 0)
+
+		intersection = ray.origin + min(nearest.distances) * ray.direction
+		C = self.accLightSources(intersection, nearest.object, objects, lights)
+
+		# recursive reflection computation.
+		if nearest.object.material.specular > 0:
+			N = nearest.object.normalAt(intersection)
+			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N 
+			reflection = Ray.fromPoints(p1 = intersection, p2 = reflectionRayDirection)
+
+			C = C + (self.recursiveTrace(reflection, objects, lights, depth + 1) * nearest.object.material.specular)
+
+		r = min(C.r, nearest.object.getColor().r)
+		g = min(C.g, nearest.object.getColor().g)
+		b = min(C.b, nearest.object.getColor().b)
+
+		return Color(r, g, b)
+
+	def accLightSources(self, intersection, intersector, objects, lights):
+		C = intersector.getColor() * intersector.material.ambient
+
+		for light in lights:
+			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
+			s_distances = self.distances(objects, shadowRay)
+
+			if np.abs(min(s_distances[0].distances)) < 0.5:
+				if len(s_distances[0].distances) == 1:
+					shadownearest = min(s_distances[1].distances)
+				else:
+					shadownearest = s_distances[0].distances[1]
+			else:
+				shadownearest = min(s_distances[0].distances)
+
+			if shadownearest > min(self.distances([light], shadowRay)[0].distances):
+				C = C + light.getColor()
+
+		r = min(C.r, intersector.getColor().r)
+		g = min(C.g, intersector.getColor().g)
+		b = min(C.b, intersector.getColor().b)
+
+		return Color(r, g, b)
+
+
+
+
+
+
