@@ -124,7 +124,7 @@ class ShadingShadowRayTracer(RayTracer):
 
 			# if the nearest intersection is in a higher or equal distance to the light, than
 			# the distance from this point to the light, then there is nothing in between.
-			if shadowNearest.distance > lightDistance:
+			if shadowNearest.distance >= lightDistance:
 				C = C + self.shading(intersection, nearest.object, shadowRay, light.getColor())
 
 		r = min(C.r, nearest.object.getColor().r)
@@ -206,7 +206,7 @@ class RecursiveRayTracer(RayTracer):
 			else:
 				shadowNearest = shadowDistances[0]
 
-			if shadowNearest > self.distances([light], shadowRay)[0].distance:
+			if shadowNearest >= self.distances([light], shadowRay)[0].distance:
 				C = C + light.getColor()
 
 		r = min(C.r, intersector.getColor().r)
