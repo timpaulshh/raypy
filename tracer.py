@@ -59,7 +59,7 @@ class SimpleShadowRayTracer(RayTracer):
 
 		# nothing is hit.
 		if nearest.distance == np.inf:
-			return WHITE.toHex()
+			return WHITE
 
 		# ambient color of nearest
 		C = nearest.object.getColor() * nearest.object.material.ambient
@@ -103,7 +103,7 @@ class ShadingShadowRayTracer(RayTracer):
 
 		# nothing is hit.
 		if nearest.distance == np.inf:
-			return WHITE.toHex()
+			return WHITE
 
 		# ambient color of nearest
 		C = nearest.object.getColor() * nearest.object.material.ambient
