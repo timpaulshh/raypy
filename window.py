@@ -51,7 +51,7 @@ class Window(Frame):
 		elif value == "ShadingShadow":
 			self.tracer = ShadingShadowRayTracer(self.scene.eye)
 		elif value == "Recursive":
-			self.tracer = RecursiveRayTracer()
+			self.tracer = RecursiveRayTracer(self.scene.eye)
 
 	def __onStartPressed(self):
 		self.startButton.config(state="disabled")

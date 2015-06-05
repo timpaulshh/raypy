@@ -8,6 +8,7 @@ import numpy as np
 from geometry import Ray, normalize
 from material import Color, WHITE
 
+EPSILON = 0.0001
 
 class DistanceObject:
 	def __init__(self, distance, obj):
@@ -74,7 +75,7 @@ class SimpleShadowRayTracer(RayTracer):
 
 			# if the distance is too low, it is most likely an intersection with the intersection
 			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < 0.1:
+			if abs(shadowDistances[0].distance) < EPSILON:
 				shadowNearest = shadowDistances[1]
 			else:
 				shadowNearest = shadowDistances[0]
@@ -118,7 +119,7 @@ class ShadingShadowRayTracer(RayTracer):
 
 			# if the distance is too low, it is most likely an intersection with the intersection
 			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < 0.1:
+			if abs(shadowDistances[0].distance) < EPSILON:
 				shadowNearest = shadowDistances[1]
 			else:
 				shadowNearest = shadowDistances[0]
@@ -166,6 +167,9 @@ class ShadingShadowRayTracer(RayTracer):
 class RecursiveRayTracer(RayTracer):
 	MAX_DEPTH = 5
 
+	def __init__(self, eye):
+		self.eye = eye
+
 	def trace(self, ray, objects, lights):
 		return self.recursiveTrace(ray, objects, lights, 0)
 
@@ -174,7 +178,7 @@ class RecursiveRayTracer(RayTracer):
 			return WHITE
 
 		distances = self.distances(objects, ray)
-		if abs(distances[0].distance) < 0.1:
+		if abs(distances[0].distance) < EPSILON:
 			nearest = distances[1]
 		else:
 			nearest = distances[0]
@@ -199,10 +203,27 @@ class RecursiveRayTracer(RayTracer):
 		return C
 
 	def shading(self, intersection, intersector, shadowRay, incoming):
-		ambient = intersector.getColor() * intersector.material.ambient
-		diffuse = intersector.getColor() * intersector.material.diffuse
+		# phong-blinn shading
 
-		return ambient + diffuse
+		# ambient
+		ambient = intersector.getColor() * intersector.material.ambient
+
+		# diffuse
+		L = shadowRay.direction
+		cos_delta = np.dot(L, intersector.normalAt(intersection))
+		if cos_delta < 0:
+			cos_delta = 0
+		diffuse = incoming * intersector.material.diffuse * cos_delta
+
+		# specular (blinn)
+		V = Ray.fromPoints(intersection, self.eye).direction
+		H = normalize(V + L)
+		cos_theta = np.dot(intersector.normalAt(intersection), H)
+		if cos_theta < 0:
+			cos_theta = 0
+		specular = incoming * intersector.material.specular * math.pow(cos_theta, 10)
+
+		return ambient + diffuse + specular
 
 	def accLightSources(self, intersection, intersector, objects, lights):
 		C = intersector.getColor() * intersector.material.ambient
@@ -215,7 +236,7 @@ class RecursiveRayTracer(RayTracer):
 
 			# if the distance is too low, it is most likely an intersection with the intersection
 			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < 0.1:
+			if abs(shadowDistances[0].distance) < EPSILON:
 				shadowNearest = shadowDistances[1]
 			else:
 				shadowNearest = shadowDistances[0]
