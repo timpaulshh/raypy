@@ -17,6 +17,7 @@ class Scene:
 		self.geometry = geometry
 		self.lights = lights
 
+
 class Screen(Plane):
 	def __init__(self, origin, normal, resolutionX, resolutionY, pixelSizeInWorldCoords):
 		Plane.__init__(self, origin, normal)

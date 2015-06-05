@@ -19,8 +19,8 @@ if __name__ == "__main__":
 	p5 = Plane([0, 0, 5], [0, 0, -1], Material(Color(200, 200, 200), 0.5, 0, 0.2))
 	p6 = Plane([0, 0, -5], [0, 0, 1], Material(Color(255, 255, 255), 0.5, 0, 0.2))
 
-	s1 = Sphere([0, 3, 2], 2, Material(Color(255, 255, 0), 0.5, 0.8, 0.2))
-	s2 = Sphere([4, 2, 1], 0.5, Material(Color(255, 255, 255), 0.5, 0.8, 0.2))
+	s1 = Sphere([0, 3, 2], 2, Material(Color(200, 200, 0), 0.5, 0.8, 0.2))
+	s2 = Sphere([4, 2, 1], 0.5, Material(Color(150, 150, 150), 0.5, 0.8, 0.2))
 
 	l1 = Sphere([0, -4, 0], 1, Material(Color(255, 255, 255), 0.5, 0.2, 0.2))
 

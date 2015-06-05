@@ -2,11 +2,12 @@ import numpy as np
 
 
 class Material:
-	def __init__(self, color, diffuse, specular, ambient = 0):
+	def __init__(self, color, diffuse, specular, ambient=0):
 		self.color = color
 		self.ambient = ambient
 		self.diffuse = diffuse
 		self.specular = specular
+
 
 class Color:
 	def __init__(self, r, g, b):
@@ -34,39 +35,39 @@ class Color:
 	def toHex(self):
 		return "#%02x%02x%02x" % (self.r, self.g, self.b)
 
-WHITE = Color(255, 255, 255)
 
+WHITE = Color(255, 255, 255)
 
 if __name__ == "__main__":
 	a = Color(100, 100, 100)
 	b = Color(50, 50, 50)
 
 	c = a + b
-	assert(c.r == a.r + b.r)
-	assert(c.g == a.g + b.g)
-	assert(c.b == a.b + b.b)
+	assert (c.r == a.r + b.r)
+	assert (c.g == a.g + b.g)
+	assert (c.b == a.b + b.b)
 
 	c = a - b
-	assert(c.r == a.r - b.r)
-	assert(c.g == a.g - b.g)
-	assert(c.b == a.b - b.b)
+	assert (c.r == a.r - b.r)
+	assert (c.g == a.g - b.g)
+	assert (c.b == a.b - b.b)
 
 	d = Color(200, 200, 200) + Color(200, 200, 200)
-	assert(d.r == 255)
-	assert(d.g == 255)
-	assert(d.b == 255)
+	assert (d.r == 255)
+	assert (d.g == 255)
+	assert (d.b == 255)
 
 	e = Color(10, 10, 10) - Color(200, 200, 200)
-	assert(e.r == 0)
-	assert(e.g == 0)
-	assert(e.b == 0)
+	assert (e.r == 0)
+	assert (e.g == 0)
+	assert (e.b == 0)
 
 	f = Color(10, 10, 10) * 5
-	assert(f.r == 50)
-	assert(f.g == 50)
-	assert(f.b == 50)
+	assert (f.r == 50)
+	assert (f.g == 50)
+	assert (f.b == 50)
 
 	g = Color(50, 50, 50) / 5
-	assert(g.r == 10)
-	assert(g.g == 10)
-	assert(g.b == 10)
+	assert (g.r == 10)
+	assert (g.g == 10)
+	assert (g.b == 10)

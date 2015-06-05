@@ -1,9 +1,11 @@
 # !/usr/bin/python
 
 from abc import ABCMeta, abstractmethod
-from material import Material, Color
 
 import numpy as np
+
+from material import Material, Color
+
 
 def vector_length(v):
 	return np.linalg.norm(v)
@@ -51,7 +53,7 @@ class GeometryObject:
 
 
 class Plane(GeometryObject):
-	def __init__(self, origin, normal, material = None):
+	def __init__(self, origin, normal, material=None):
 		GeometryObject.__init__(self, material)
 		self.origin = np.array(origin)
 		self.normal = normalize(np.array(normal))
@@ -70,7 +72,7 @@ class Plane(GeometryObject):
 
 
 class Sphere(GeometryObject):
-	def __init__(self, center, radius, material = None):
+	def __init__(self, center, radius, material=None):
 		GeometryObject.__init__(self, material)
 		self.center = np.array(center)
 		self.radius = radius

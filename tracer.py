@@ -198,22 +198,37 @@ class RecursiveRayTracer(RayTracer):
 
 		return Color(r, g, b)
 
+	def shading(self, intersection, intersector, shadowRay, incoming):
+		ambient = intersector.getColor() * intersector.material.ambient
+		diffuse = intersector.getColor() * intersector.material.diffuse
+
+		return ambient + diffuse
+
 	def accLightSources(self, intersection, intersector, objects, lights):
 		C = intersector.getColor() * intersector.material.ambient
 
 		for light in lights:
+			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
+
 			shadowDistances = self.distances(objects, shadowRay)
 
 			# if the distance is too low, it is most likely an intersection with the intersection
 			# thanks to floating point inaccuracy.
-			if shadowDistances[0].distance < 0.1:
-				shadowNearest = shadowDistances[2]  # why the fuck does this not work with 1?!
+			if abs(shadowDistances[0].distance) < 0.1:
+				shadowNearest = shadowDistances[1]
 			else:
 				shadowNearest = shadowDistances[0]
 
-			if shadowNearest >= self.distances([light], shadowRay)[0].distance:
-				C = C + light.getColor()
+			lightDistance = self.distances([light], shadowRay)[0].distance
+
+			# if the nearest intersection is in a higher or equal distance to the light, than
+			# the distance from this point to the light, then there is nothing in between.
+			# the check after the or is necessary, because the intersect function
+			# of the sphere is checking for the inverse-direction of the ray too,
+			# thus giving a negative value, if the ray hits the in the opposite direction.
+			if shadowNearest.distance >= lightDistance or shadowNearest.distance < 0:
+				C = C + self.shading(intersection, intersector, shadowRay, light.getColor())
 
 		r = min(C.r, intersector.getColor().r)
 		g = min(C.g, intersector.getColor().g)
