@@ -90,9 +90,9 @@ class Sphere(GeometryObject):
 
 		# sqrt of zero is zero, we dont have to compute it.
 		if np.abs(term) < 1e-6:
-			return [loc * -1]
+			return filter(lambda e: e > 0, [loc * -1])
 
-		return [loc * -1 - np.sqrt(term), loc * -1 + np.sqrt(term)]
+		return filter(lambda e: e > 0, [loc * -1 - np.sqrt(term), loc * -1 + np.sqrt(term)]) 
 
 	def normalAt(self, point):
 		#    N = ((x - cx)/R, (y - cy)/R, (z - cz)/R)

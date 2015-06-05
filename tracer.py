@@ -86,7 +86,7 @@ class SimpleShadowRayTracer(RayTracer):
 			# the check after the or is necessary, because the intersect function
 			# of the sphere is checking for the inverse-direction of the ray too,
 			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance or shadowNearest.distance < 0:
+			if shadowNearest.distance >= lightDistance:
 				C = C + self.shading(intersection, nearest.object, shadowRay, light.getColor())
 
 		return C
@@ -130,7 +130,7 @@ class ShadingShadowRayTracer(RayTracer):
 			# the check after the or is necessary, because the intersect function
 			# of the sphere is checking for the inverse-direction of the ray too,
 			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance or shadowNearest.distance < 0:
+			if shadowNearest.distance >= lightDistance:
 				C = C + self.shading(intersection, nearest.object, shadowRay, light.getColor())
 
 		r = min(C.r, nearest.object.getColor().r)
@@ -173,7 +173,11 @@ class RecursiveRayTracer(RayTracer):
 		if depth > self.MAX_DEPTH:
 			return WHITE
 
-		nearest = self.distances(objects, ray)[0]
+		distances = self.distances(objects, ray)
+		if abs(distances[0].distance) < 0.1:
+			nearest = distances[1]
+		else:
+			nearest = distances[0]
 
 		if nearest.distance == np.inf:
 			return WHITE
@@ -192,11 +196,7 @@ class RecursiveRayTracer(RayTracer):
 
 			C = C + recursiveValue
 
-		r = min(C.r, nearest.object.getColor().r)
-		g = min(C.g, nearest.object.getColor().g)
-		b = min(C.b, nearest.object.getColor().b)
-
-		return Color(r, g, b)
+		return C
 
 	def shading(self, intersection, intersector, shadowRay, incoming):
 		ambient = intersector.getColor() * intersector.material.ambient
@@ -227,7 +227,7 @@ class RecursiveRayTracer(RayTracer):
 			# the check after the or is necessary, because the intersect function
 			# of the sphere is checking for the inverse-direction of the ray too,
 			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance or shadowNearest.distance < 0:
+			if shadowNearest.distance >= lightDistance:
 				C = C + self.shading(intersection, intersector, shadowRay, light.getColor())
 
 		r = min(C.r, intersector.getColor().r)
