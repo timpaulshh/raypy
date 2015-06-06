@@ -2,11 +2,13 @@ import numpy as np
 
 
 class Material:
-	def __init__(self, color, diffuse, specular, ambient=0):
+	def __init__(self, color, diffuse, specular, ambient=0, refractive=False, n=1):
 		self.color = color
 		self.ambient = ambient
 		self.diffuse = diffuse
 		self.specular = specular
+		self.refractive = refractive
+		self.n = n
 
 
 class Color:

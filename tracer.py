@@ -200,6 +200,22 @@ class RecursiveRayTracer(RayTracer):
 
 			C = C + recursiveValue
 
+		# http://www.flipcode.com/archives/reflection_transmission.pdf
+		if nearest.object.material.refractive:
+			n1 = 1.000292  # brechungsindex luft
+			n2 = nearest.object.material.n
+			n = n1 / n2
+			normal = nearest.object.normalAt(intersection)
+			cosI = np.dot(ray.direction, normal)
+			sinT2 = n * n * (1.0 - cosI * cosI)
+
+			# catch total internal reflection
+			if not (sinT2 > 1.0):
+				refraction = Ray(intersection, n * ray.direction - (n + np.sqrt(1.0 - sinT2)) * normal)
+				value = self.recursiveTrace(refraction, objects, lights, depth + 1)
+
+				C = C + value
+
 		return C
 
 	def shading(self, intersection, intersector, shadowRay, incoming):
