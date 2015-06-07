@@ -201,11 +201,20 @@ class RecursiveRayTracer(RayTracer):
 			C = C + recursiveValue
 
 		# http://www.flipcode.com/archives/reflection_transmission.pdf
+		# http://courses.cs.washington.edu/courses/cse457/08au/lectures/markup/ray-tracing-markup.pdf
 		if nearest.object.material.refractive:
-			n1 = 1.000292  # brechungsindex luft
-			n2 = nearest.object.material.n
-			n = n1 / n2
 			normal = nearest.object.normalAt(intersection)
+			minusD = ray.direction * -1
+
+			# ray is entering object
+			if np.dot(minusD, normal) > 0:
+				n1 = 1.000292  # brechungsindex luft
+				n2 = nearest.object.material.n
+			else:  # ray is escaping object.
+				n1 = nearest.object.material.n
+				n2 = 1.000292
+
+			n = n1 / n2
 			cosI = np.dot(ray.direction, normal)
 			sinT2 = n * n * (1.0 - cosI * cosI)
 
