@@ -1,3 +1,4 @@
+from Queue import Queue
 from Tkconstants import TOP, RIGHT, LEFT, END
 from Tkinter import Button, PhotoImage, Canvas, Frame, Listbox
 
@@ -17,7 +18,8 @@ class Window(Frame):
 		self.after_id = 0
 		self.tracer = tracer
 
-		self.threads = []
+		self.finishedThreads = 0
+		self.queues = [Queue()] * self.scene.screen.resolutionY
 
 		self.__init_window(height, width)
 
@@ -60,25 +62,33 @@ class Window(Frame):
 		self.listbox.config(state="disabled")
 		self.__draw()
 
-	# def __update(self):
-	# 	ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
-	# 	self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (self.d[0], self.d[1]))
-	# 	self.master.update()
+	def __update(self):
+		for queue in self.queues:
+			item = queue.get()
+
+			if item == "finished":
+				self.finishedThreads += 1
+				continue
+
+			self.img.put(item[0], item[1])
+			self.master.update()
+
+		if self.finishedThreads == self.scene.screen.resolutionY:
+			self.master.after_cancel(self.after_id)
+			self.resetButton.config(state="active")
+			self.finishedThreads = 0
+			self.queues = [Queue()] * self.scene.screen.resolutionY
+			return
+
+		self.after_id = self.master.after(0, self.__update())
 
 	def __draw(self):
-		count = 0
-		stepSize = 4
-		while count <= self.scene.screen.resolutionY:
-			self.threads = [LineThread(self.tracer, self.img, y, self.scene.screen.resolutionX, self.master, self.scene)
-							for y in range(count, count + stepSize)]
-			for t in self.threads:
-				t.start()
-			for t in self.threads:
-				t.join()
+		threads = [LineThread(self.tracer, y, self.scene.screen.resolutionX, self.scene, self.queues[y]) for y in
+				   range(self.scene.screen.resolutionY)]
+		for t in threads:
+			t.start()
 
-			count += stepSize
-
-		self.resetButton.config(state="active")
+		self.__update()
 
 	def __onResetPressed(self):
 		self.img.blank()
@@ -87,24 +97,22 @@ class Window(Frame):
 		self.startButton.config(state="active")
 		self.listbox.config(state="normal")
 
-		self.threads = []
-
 
 import threading
 
-
 class LineThread(threading.Thread):
-	def __init__(self, tracer, img, line, width, master, scene):
+	def __init__(self, tracer, line, width, scene, queue):
 		threading.Thread.__init__(self)
 		self.tracer = tracer
-		self.img = img
 		self.line = line
 		self.width = width
-		self.master = master
 		self.scene = scene
+		self.queue = queue
 
 	def run(self):
 		for x in range(self.width):
 			ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord((x, self.line)))
-			self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (x, self.line))
-			self.master.update()
+			info = (self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (x, self.line))
+			self.queue.put(info)
+
+		self.queue.put("finished")
