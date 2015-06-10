@@ -17,6 +17,8 @@ class Window(Frame):
 		self.after_id = 0
 		self.tracer = tracer
 
+		self.threads = []
+
 		self.__init_window(height, width)
 
 		self.master.mainloop()
@@ -58,32 +60,51 @@ class Window(Frame):
 		self.listbox.config(state="disabled")
 		self.__draw()
 
-	def __update(self):
-		ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
-		self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (self.d[0], self.d[1]))
-		self.master.update()
+	# def __update(self):
+	# 	ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
+	# 	self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (self.d[0], self.d[1]))
+	# 	self.master.update()
 
 	def __draw(self):
-		# update image
-		self.__update()
+		count = 0
+		stepSize = 4
+		while count <= self.scene.screen.resolutionY:
+			self.threads = [LineThread(self.tracer, self.img, y, self.scene.screen.resolutionX, self.master, self.scene)
+							for y in range(count, count + stepSize)]
+			for t in self.threads:
+				t.start()
+			for t in self.threads:
+				t.join()
 
-		# next self.d
-		if self.d[0] < self.scene.screen.resolutionX:
-			self.d[0] = self.d[0] + 1
-		else:
-			if self.d[1] < self.scene.screen.resolutionY:
-				self.d[0] = 0
-				self.d[1] = self.d[1] + 1
-			else:
-				self.master.after_cancel(self.after_id)
-				self.resetButton.config(state="active")
-				return
+			count += stepSize
 
-		self.after_id = self.master.after(0, self.__draw)
+		self.resetButton.config(state="active")
 
 	def __onResetPressed(self):
 		self.img.blank()
-		self.d = [0, 0]
+
 		self.resetButton.config(state="disabled")
 		self.startButton.config(state="active")
 		self.listbox.config(state="normal")
+
+		self.threads = []
+
+
+import threading
+
+
+class LineThread(threading.Thread):
+	def __init__(self, tracer, img, line, width, master, scene):
+		threading.Thread.__init__(self)
+		self.tracer = tracer
+		self.img = img
+		self.line = line
+		self.width = width
+		self.master = master
+		self.scene = scene
+
+	def run(self):
+		for x in range(self.width):
+			ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord((x, self.line)))
+			self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (x, self.line))
+			self.master.update()
