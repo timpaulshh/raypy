@@ -64,7 +64,10 @@ class Window(Frame):
 
 	def __update(self):
 		for queue in self.queues:
-			item = queue.get()
+			try:
+				item = queue.get(timeout=1)
+			except Queue.Empty:
+				continue
 
 			if item == "finished":
 				self.finishedThreads += 1
@@ -110,7 +113,13 @@ class LineThread(threading.Thread):
 		self.queue = queue
 
 	def run(self):
-		for x in range(self.width):
+
+		import random
+
+		indexes = range(self.width)
+		random.shuffle(indexes)
+
+		for x in indexes:
 			ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord((x, self.line)))
 			info = (self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (x, self.line))
 			self.queue.put(info)
