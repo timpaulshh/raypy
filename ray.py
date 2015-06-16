@@ -2,7 +2,7 @@
 
 from geometry import Plane, Sphere
 from scene import Screen, Scene
-from tracer import SimpleRayTracer
+from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTracer, RecursiveRayTracer
 from material import Material, Color
 from window import Window
 
@@ -33,7 +33,8 @@ if __name__ == "__main__":
 
 	import argparse
 	parser = argparse.ArgumentParser(description="Ray Tracing in Python.")
-	parser.add_argument("-r", "--render", help="activate non-interactive rendering into a file. First argument is the file, Second the tracer", nargs=2)
+	parser.add_argument("-r", "--render", help="activate non-interactive rendering into a file.", nargs=2,
+						metavar=("FILENAME", "ALGORITHM"))
 
 	args = parser.parse_args()
 
@@ -48,12 +49,14 @@ if __name__ == "__main__":
 		elif value == "Shadow":
 			tracer = SimpleShadowRayTracer()
 		elif value == "ShadingShadow":
-			tracer = ShadingShadowRayTracer(self.scene.eye)
+			tracer = ShadingShadowRayTracer(scene.eye)
 		elif value == "Recursive":
-			tracer = RecursiveRayTracer(self.scene.eye)
+			tracer = RecursiveRayTracer(scene.eye)
+		else:
+			print "Unknown Ray-Tracer Algorithm. Exiting ..."
+			exit(1)
 
 		renderer = FileRenderer(WIDTH, HEIGHT, tracer, scene)
 		renderer.render(args.render[0])
 	else:
 		window = Window(WIDTH, HEIGHT, scene, tracer=SimpleRayTracer())
-	
