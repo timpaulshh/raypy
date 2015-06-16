@@ -33,10 +33,21 @@ class RayTracer:
 	def trace(self, ray, objects, lights):
 		pass
 
+	@abstractmethod
+	def shading(self, intersection, intersector, shadowRay, incoming):
+		pass
+
+	@abstractmethod
+	def calcShadowFactor(self, shadowRay, objects, light):
+		pass
+
 
 class SimpleRayTracer(RayTracer):
 	def shading(self, intersection, intersector, shadowRay, incoming):
 		return intersector.getColor()
+
+	def calcShadowFactor(self, shadowRay, objects, light):
+		return 1
 
 	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
@@ -54,6 +65,25 @@ class SimpleShadowRayTracer(RayTracer):
 
 		return ambient + diffuse + specular
 
+	def calcShadowFactor(self, shadowRay, objects, light):
+		shadowDistances = self.distances(objects, shadowRay)
+
+		# if the distance is too low, it is most likely an intersection with the intersection
+		# thanks to floating point inaccuracy.
+		if abs(shadowDistances[0].distance) < EPSILON:
+			shadowNearest = shadowDistances[1]
+		else:
+			shadowNearest = shadowDistances[0]
+
+		lightDistance = self.distances([light], shadowRay)[0].distance
+
+		# if the nearest intersection is in a higher or equal distance to the light, than
+		# the distance from this point to the light, then there is nothing in between.
+		if shadowNearest.distance >= lightDistance:
+			return 1
+		else:
+			return 0
+
 	def trace(self, ray, objects, lights):
 		distances = self.distances(objects, ray)
 		nearest = distances[0]
@@ -70,31 +100,13 @@ class SimpleShadowRayTracer(RayTracer):
 		for light in lights:
 			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-
-			shadowDistances = self.distances(objects, shadowRay)
-
-			# if the distance is too low, it is most likely an intersection with the intersection
-			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < EPSILON:
-				shadowNearest = shadowDistances[1]
-			else:
-				shadowNearest = shadowDistances[0]
-
-			lightDistance = self.distances([light], shadowRay)[0].distance
-
-			# if the nearest intersection is in a higher or equal distance to the light, than
-			# the distance from this point to the light, then there is nothing in between.
-			# the check after the or is necessary, because the intersect function
-			# of the sphere is checking for the inverse-direction of the ray too,
-			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance:
-				C = C + self.shading(intersection, nearest.object, shadowRay, light.getColor())
+			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
 
 		return C
 
 
 # @todo: still is not stable for more than one light-source
-class ShadingShadowRayTracer(RayTracer):
+class ShadingShadowRayTracer(SimpleShadowRayTracer):
 	def __init__(self, eye):
 		self.eye = eye
 
@@ -114,25 +126,7 @@ class ShadingShadowRayTracer(RayTracer):
 		for light in lights:
 			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-
-			shadowDistances = self.distances(objects, shadowRay)
-
-			# if the distance is too low, it is most likely an intersection with the intersection
-			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < EPSILON:
-				shadowNearest = shadowDistances[1]
-			else:
-				shadowNearest = shadowDistances[0]
-
-			lightDistance = self.distances([light], shadowRay)[0].distance
-
-			# if the nearest intersection is in a higher or equal distance to the light, than
-			# the distance from this point to the light, then there is nothing in between.
-			# the check after the or is necessary, because the intersect function
-			# of the sphere is checking for the inverse-direction of the ray too,
-			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance:
-				C = C + self.shading(intersection, nearest.object, shadowRay, light.getColor())
+			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -164,7 +158,7 @@ class ShadingShadowRayTracer(RayTracer):
 		return ambient + diffuse + specular
 
 
-class RecursiveRayTracer(RayTracer):
+class RecursiveRayTracer(ShadingShadowRayTracer):
 	MAX_DEPTH = 5
 
 	def __init__(self, eye):
@@ -187,7 +181,19 @@ class RecursiveRayTracer(RayTracer):
 			return WHITE
 
 		intersection = ray.origin + nearest.distance * ray.direction
-		C = self.accLightSources(intersection, nearest.object, objects, lights)
+
+		# default lighting
+		C = nearest.object.getColor() * nearest.object.material.ambient
+		for light in lights:
+			# calculate ray from intersection towards the light
+			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
+			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
+
+		r = min(C.r, nearest.object.getColor().r)
+		g = min(C.g, nearest.object.getColor().g)
+		b = min(C.b, nearest.object.getColor().b)
+
+		C = Color(r, g, b)
 
 		# recursive reflection computation.
 		if nearest.object.material.specular > 0:
@@ -226,58 +232,3 @@ class RecursiveRayTracer(RayTracer):
 				C = C + value
 
 		return C
-
-	def shading(self, intersection, intersector, shadowRay, incoming):
-		# phong-blinn shading
-
-		# ambient
-		ambient = intersector.getColor() * intersector.material.ambient
-
-		# diffuse
-		L = shadowRay.direction
-		cos_delta = np.dot(L, intersector.normalAt(intersection))
-		if cos_delta < 0:
-			cos_delta = 0
-		diffuse = incoming * intersector.material.diffuse * cos_delta
-
-		# specular (blinn)
-		V = Ray.fromPoints(intersection, self.eye).direction
-		H = normalize(V + L)
-		cos_theta = np.dot(intersector.normalAt(intersection), H)
-		if cos_theta < 0:
-			cos_theta = 0
-		specular = incoming * intersector.material.specular * math.pow(cos_theta, 10)
-
-		return ambient + diffuse + specular
-
-	def accLightSources(self, intersection, intersector, objects, lights):
-		C = intersector.getColor() * intersector.material.ambient
-
-		for light in lights:
-			# calculate ray from intersection towards the light
-			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-
-			shadowDistances = self.distances(objects, shadowRay)
-
-			# if the distance is too low, it is most likely an intersection with the intersection
-			# thanks to floating point inaccuracy.
-			if abs(shadowDistances[0].distance) < EPSILON:
-				shadowNearest = shadowDistances[1]
-			else:
-				shadowNearest = shadowDistances[0]
-
-			lightDistance = self.distances([light], shadowRay)[0].distance
-
-			# if the nearest intersection is in a higher or equal distance to the light, than
-			# the distance from this point to the light, then there is nothing in between.
-			# the check after the or is necessary, because the intersect function
-			# of the sphere is checking for the inverse-direction of the ray too,
-			# thus giving a negative value, if the ray hits the in the opposite direction.
-			if shadowNearest.distance >= lightDistance:
-				C = C + self.shading(intersection, intersector, shadowRay, light.getColor())
-
-		r = min(C.r, intersector.getColor().r)
-		g = min(C.g, intersector.getColor().g)
-		b = min(C.b, intersector.getColor().b)
-
-		return Color(r, g, b)
