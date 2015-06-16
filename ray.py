@@ -7,6 +7,7 @@ from material import Material, Color
 from window import Window
 
 if __name__ == "__main__":
+
 	WIDTH = 200
 	HEIGHT = 200
 
@@ -30,4 +31,29 @@ if __name__ == "__main__":
 
 	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2, s3, s4], lights=[l1])
 
-	window = Window(WIDTH, HEIGHT, scene, tracer=SimpleRayTracer())
+	import argparse
+	parser = argparse.ArgumentParser(description="Ray Tracing in Python.")
+	parser.add_argument("-r", "--render", help="activate non-interactive rendering into a file. First argument is the file, Second the tracer", nargs=2)
+
+	args = parser.parse_args()
+
+	if not args.render is None:
+		print "rendering mode into: %s with %s" % (args.render[0], args.render[1])
+		from filerenderer import FileRenderer
+
+		value = args.render[1]
+
+		if value == "Simple":
+			tracer = SimpleRayTracer()
+		elif value == "Shadow":
+			tracer = SimpleShadowRayTracer()
+		elif value == "ShadingShadow":
+			tracer = ShadingShadowRayTracer(self.scene.eye)
+		elif value == "Recursive":
+			tracer = RecursiveRayTracer(self.scene.eye)
+
+		renderer = FileRenderer(WIDTH, HEIGHT, tracer, scene)
+		renderer.render(args.render[0])
+	else:
+		window = Window(WIDTH, HEIGHT, scene, tracer=SimpleRayTracer())
+	
