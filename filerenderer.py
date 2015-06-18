@@ -18,7 +18,7 @@ class FileRenderer():
 				R = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord((x,y)))
 				C = self.tracer.trace(R, self.scene.geometry, self.scene.lights).toHex()
 				draw.point((x,y), fill=C)
-				sys.stdout.write("Progress: %2.2f%%\r" % ((x * float(self.width) + y) / (self.width * self.height)))
+				sys.stdout.write("Progress: %2.2f%%\r" % ((x * float(self.width) + y)*100 / (self.width * self.height)))
 				sys.stdout.flush()
 
 		img.save(fileName + ".png", format="png")

@@ -7,12 +7,6 @@ from material import Material, Color
 from window import Window
 
 if __name__ == "__main__":
-
-	WIDTH = 200
-	HEIGHT = 200
-
-	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, 0.05)
-
 	p1 = Plane([0, 5, 0], [0, -1, 0], Material(Color(0, 0, 200), 0.5, 0, 0.2))
 	p2 = Plane([0, -5, 0], [0, 1, 0], Material(Color(100, 100, 100), 0.5, 0, 0.2))
 	p3 = Plane([5, 0, 0], [-1, 0, 0], Material(Color(100, 50, 50), 0.5, 0, 0.2))
@@ -29,14 +23,22 @@ if __name__ == "__main__":
 
 	eye = [0, 0, -4.9]
 
-	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2, s3, s4], lights=[l1])
+	
 
 	import argparse
 	parser = argparse.ArgumentParser(description="Ray Tracing in Python.")
 	parser.add_argument("-r", "--render", help="activate non-interactive rendering into a file.", nargs=2,
 						metavar=("FILENAME", "ALGORITHM"))
+	parser.add_argument("--width", type=int, help="width of the image.", default=200)
+	parser.add_argument("--height", type=int, help="height of the image.", default=200)
 
 	args = parser.parse_args()
+
+	WIDTH = args.width
+	HEIGHT = args.height
+	bla = 10.0 / WIDTH 
+	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, bla)
+	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2, s3, s4], lights=[l1])
 
 	if not args.render is None:
 		print "rendering mode into: %s with %s" % (args.render[0], args.render[1])
