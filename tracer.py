@@ -15,8 +15,7 @@ class DistanceObject:
 		self.distance = distance
 		self.object = obj
 
-
-class RayTracer:
+class Tracer:
 	__metaclass__ = ABCMeta
 
 	# returns a sorted list of tuples (distance, object)
@@ -32,6 +31,9 @@ class RayTracer:
 	@abstractmethod
 	def trace(self, ray, objects, lights):
 		pass
+
+class RayTracer(Tracer):
+	__metaclass__ = ABCMeta
 
 	@abstractmethod
 	def shading(self, intersection, intersector, shadowRay, incoming):
@@ -208,6 +210,7 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 
 		# http://www.flipcode.com/archives/reflection_transmission.pdf
 		# http://courses.cs.washington.edu/courses/cse457/08au/lectures/markup/ray-tracing-markup.pdf
+		# maybe better: http://www.keithlantz.net/2013/03/a-basic-path-tracer-with-cuda/
 		if nearest.object.material.refractive:
 			normal = nearest.object.normalAt(intersection)
 			minusD = ray.direction * -1
@@ -230,5 +233,57 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 				value = self.recursiveTrace(refraction, objects, lights, depth + 1)
 
 				C = C + value
-
 		return C
+
+class PathTracer(Tracer):
+	MAX_DEPTH = 5
+	RAY_PER_PIXEL = 16
+
+	def trace(self, ray, objects, lights):
+		colors = [None] * RAY_PER_PIXEL
+
+		for i in range(RAY_PER_PIXEL):
+			colors[i] = self.recursiveTrace(ray, objects, lights, 0)
+
+		# average con colors.
+		pass
+
+	def recursiveTrace(self, ray, objects, lights, depth):
+		if depth > MAX_DEPTH:
+			return WHITE
+
+		distances = self.distances(objects, ray)
+		if abs(distances[0].distance) < EPSILON:
+			nearest = distances[1]
+		else:
+			nearest = distances[0]
+
+		if nearest.distance == np.inf:
+			return WHITE
+
+		intersection = ray.origin + nearest.distance * ray.direction
+
+		# default lighting
+		C = nearest.object.getColor() * nearest.object.material.ambient
+
+		# recursive reflection computation.
+		if nearest.object.material.specular > 0:
+			N = nearest.object.normalAt(intersection)
+			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N
+			reflection = Ray(intersection, reflectionRayDirection)
+
+			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
+			recursiveValue = recursiveValue * nearest.object.material.specular
+
+			C = C + recursiveValue
+
+		if nearest.object.material.diffuse > 0:
+			N = nearest.object.normalAt(intersection)
+			# calculate random new ray direction from hemisphere.
+			# calculate random hemisphere shit in tangent space:
+			# http://www.keithlantz.net/2013/03/a-basic-path-tracer-with-cuda/
+			# http://www.rorydriscoll.com/2009/01/07/better-sampling/
+
+			# get local coordinate system from at normal.
+			# transform tangent-space shit in this normal space.
+			# this is the new direction.
