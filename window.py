@@ -63,15 +63,16 @@ class Window(Frame):
 		self.__draw()
 
 	def __update(self):
-		item = self.q2.get()
+		if self.q1.qsize() >= 4:
+			self.finishedThreads = 4
+			while not self.q1.empty():
+				self.q1.get()
 
-		if item == "finished.":
-			self.finishedThreads += 1
-		else:
+		if not self.q2.empty():
+			item = self.q2.get()
 			self.img.put(item[1], item[0])
 			self.master.update()
-
-		if self.finishedThreads == 4:
+		elif self.finishedThreads == 4:
 			for t in self.threads:
 				t.join()
 
@@ -83,11 +84,12 @@ class Window(Frame):
 
 	def __draw(self):
 		from processes import BlockProcess
-		from multiprocessing.queues import SimpleQueue
-		self.q2 = SimpleQueue()
+		from multiprocessing import Queue
+		self.q1 = Queue()
+		self.q2 = Queue()
 		self.finishedThreads = 0
 
-		self.threads = BlockProcess.forCount(4, self.width, self.height, self.tracer, self.scene, self.q2)
+		self.threads = BlockProcess.forCount(4, self.width, self.height, self.tracer, self.scene, self.q2, self.q1)
 
 		for t in self.threads:
 			t.start()

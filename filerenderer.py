@@ -14,12 +14,13 @@ class FileRenderer():
 
 		processCount = 4
 
-		from multiprocessing.queues import SimpleQueue
-		q2 = SimpleQueue() # in this case yolo.
+		from multiprocessing import Queue
+		q1 = Queue()
+		q2 = Queue() # in this case yolo.
 
 		from processes import BlockProcess
 
-		threads = BlockProcess.forCount(processCount, self.width, self.height, self.tracer, self.scene, q2)
+		threads = BlockProcess.forCount(processCount, self.width, self.height, self.tracer, self.scene, q2, q1)
 
 		startTime = time.time()
 
@@ -33,15 +34,7 @@ class FileRenderer():
 		draw = ImageDraw.Draw(img)
 
 		while count_finished < processCount:
-			info = q2.get()
-
-			if info == "finished.":
-				count_finished = count_finished+1
-			else:
-				draw.point(info[0], fill=info[1])
-				drawn = drawn+1
-			
-			progress = drawn / float(self.width*self.height)
+			progress = q2.qsize() / float(self.width*self.height)
 
 			timeString = ""
 			if progress > 0:
@@ -51,6 +44,18 @@ class FileRenderer():
 
 			sys.stdout.write("Progress: %2.2f%% %s        \r" % (progress * 100, timeString))
 			sys.stdout.flush()
+
+			import Queue
+			try:
+				info = q1.get(timeout=1)
+				if info == "finished.":
+					count_finished = count_finished+1
+			except Queue.Empty:
+				continue;
+
+		while not q2.empty():
+			info = q2.get()
+			draw.point(info[0], fill=info[1])
 
 		print "Joining Processes..."
 		for t in threads:
