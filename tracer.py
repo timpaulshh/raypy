@@ -9,6 +9,7 @@ from geometry import Ray, normalize
 from material import Color, WHITE
 
 EPSILON = 0.0001
+LIGHT_DAMPING = 0.5
 
 class DistanceObject:
 	def __init__(self, distance, obj):
@@ -189,7 +190,7 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		for light in lights:
 			# calculate ray from intersection towards the light
 			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
+			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light) * LIGHT_DAMPING**depth)
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -204,7 +205,7 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 			reflection = Ray(intersection, reflectionRayDirection)
 
 			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
-			recursiveValue = recursiveValue * nearest.object.material.specular
+			recursiveValue = recursiveValue * nearest.object.material.specular * LIGHT_DAMPING**depth
 
 			C = C + recursiveValue
 
@@ -273,7 +274,7 @@ class PathTracer(Tracer):
 			reflection = Ray(intersection, reflectionRayDirection)
 
 			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
-			recursiveValue = recursiveValue * nearest.object.material.specular
+			recursiveValue = recursiveValue * nearest.object.material.specular * LIGHT_DAMPING**depth
 
 			C = C + recursiveValue
 
@@ -295,7 +296,7 @@ class PathTracer(Tracer):
 				Diffuse = Ray(intersection, new_D)
 				recursiveValue = self.recursiveTrace(Diffuse, objects, lights, depth+1)
 
-				C = C + (recursiveValue / self.DIFFUSE_REFLECT)
+				C = C + ((recursiveValue / self.DIFFUSE_REFLECT) * LIGHT_DAMPING**depth)
 
 		return C
 
