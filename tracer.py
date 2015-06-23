@@ -36,39 +36,48 @@ class Tracer:
 class RayTracer(Tracer):
 	__metaclass__ = ABCMeta
 
+	def lightAttenuation(self, intersection, light):
+		from geometry import vector_length
+
+		path = light.center - intersection
+		distance = vector_length(path)
+
+		return 1.0 / (distance**2)
+
 	@abstractmethod
-	def shading(self, intersection, intersector, shadowRay, incoming):
+	def shading(self, intersection, intersector, light):
 		pass
 
 	@abstractmethod
-	def calcShadowFactor(self, shadowRay, objects, light):
+	def calcShadowFactor(self, intersection, objects, light):
 		pass
 
 
 class SimpleRayTracer(RayTracer):
-	def shading(self, intersection, intersector, shadowRay, incoming):
+	def shading(self, intersection, intersector, light):
 		return intersector.getColor()
 
-	def calcShadowFactor(self, shadowRay, objects, light):
+	def calcShadowFactor(self, intersection, objects, light):
 		return 1
 
 	def trace(self, ray, objects, lights=[]):
 		nearest = self.distances(objects, ray)[0]
 		if nearest.distance < np.inf:
-			return self.shading(None, nearest.object, None, lights)
+			return self.shading(None, nearest.object, None)
 		else:
 			return WHITE
 
 
 class SimpleShadowRayTracer(RayTracer):
-	def shading(self, intersection, intersector, shadowRay, incoming):
+	def shading(self, intersection, intersector, light):
 		ambient = intersector.getColor() * intersector.material.ambient
 		diffuse = intersector.getColor() * intersector.material.diffuse
 		specular = intersector.getColor() * intersector.material.specular
 
 		return ambient + diffuse + specular
 
-	def calcShadowFactor(self, shadowRay, objects, light):
+	def calcShadowFactor(self, intersection, objects, light):
+		shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
 		shadowDistances = self.distances(objects, shadowRay)
 
 		# if the distance is too low, it is most likely an intersection with the intersection
@@ -101,9 +110,7 @@ class SimpleShadowRayTracer(RayTracer):
 		intersection = ray.origin + nearest.distance * ray.direction
 
 		for light in lights:
-			# calculate ray from intersection towards the light
-			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
 		return C
 
@@ -127,9 +134,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		intersection = ray.origin + nearest.distance * ray.direction
 
 		for light in lights:
-			# calculate ray from intersection towards the light
-			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light))
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -137,7 +142,8 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 
 		return Color(r, g, b)
 
-	def shading(self, intersection, intersector, shadowRay, incoming):
+	def shading(self, intersection, intersector, light):
+		shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
 		# phong-blinn shading
 
 		# ambient
@@ -148,7 +154,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		cos_delta = np.dot(L, intersector.normalAt(intersection))
 		if cos_delta < 0:
 			cos_delta = 0
-		diffuse = incoming * intersector.material.diffuse * cos_delta
+		diffuse = light.getColor() * intersector.material.diffuse * cos_delta
 
 		# specular (blinn)
 		V = Ray.fromPoints(intersection, self.eye).direction
@@ -156,7 +162,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		cos_theta = np.dot(intersector.normalAt(intersection), H)
 		if cos_theta < 0:
 			cos_theta = 0
-		specular = incoming * intersector.material.specular * math.pow(cos_theta, 10)
+		specular = light.getColor() * intersector.material.specular * math.pow(cos_theta, 10)
 
 		return ambient + diffuse + specular
 
@@ -188,9 +194,7 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		# default lighting
 		C = nearest.object.getColor() * nearest.object.material.ambient
 		for light in lights:
-			# calculate ray from intersection towards the light
-			shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
-			C = C + (self.shading(intersection, nearest.object, shadowRay, light.getColor()) * self.calcShadowFactor(shadowRay, objects, light) * LIGHT_DAMPING**depth)
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light) * LIGHT_DAMPING**depth)
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -236,9 +240,9 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 				C = C + value
 		return C
 
-class PathTracer(Tracer):
-	MAX_DEPTH = 2
-	RAY_PER_PIXEL = 16
+class PathTracer(ShadingShadowRayTracer):
+	MAX_DEPTH = 1
+	RAY_PER_PIXEL = 2
 	DIFFUSE_REFLECT = 5
 
 	def trace(self, ray, objects, lights):
@@ -264,8 +268,17 @@ class PathTracer(Tracer):
 
 		intersection = ray.origin + nearest.distance * ray.direction
 
+		C = Color(0, 0, 0)
+
 		# default lighting
-		C = nearest.object.getColor() * nearest.object.material.ambient
+		for light in lights:
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light) * LIGHT_DAMPING**depth)
+
+		r = min(C.r, nearest.object.getColor().r)
+		g = min(C.g, nearest.object.getColor().g)
+		b = min(C.b, nearest.object.getColor().b)
+
+		C = Color(r, g, b)
 
 		# recursive reflection computation.
 		if nearest.object.material.specular > 0:
@@ -274,7 +287,7 @@ class PathTracer(Tracer):
 			reflection = Ray(intersection, reflectionRayDirection)
 
 			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
-			recursiveValue = recursiveValue * nearest.object.material.specular * LIGHT_DAMPING**depth
+			recursiveValue = recursiveValue * (nearest.object.material.specular * LIGHT_DAMPING**depth)
 
 			C = C + recursiveValue
 

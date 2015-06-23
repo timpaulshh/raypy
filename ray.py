@@ -55,7 +55,7 @@ if __name__ == "__main__":
 		elif value == "Recursive":
 			tracer = RecursiveRayTracer(scene.eye)
 		elif value == "PathTracing":
-			tracer = PathTracer()
+			tracer = PathTracer(scene.eye)
 		else:
 			print "Unknown Ray-Tracer Algorithm. Exiting ..."
 			exit(1)
