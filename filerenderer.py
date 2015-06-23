@@ -30,6 +30,9 @@ class FileRenderer():
 
 		print "Exit While."
 
+		for t in threads:
+			t.terminate()
+
 		draw = ImageDraw.Draw(img)
 
 		while not q2.empty():
@@ -37,7 +40,6 @@ class FileRenderer():
 			draw.point(info[0], fill=info[1])
 
 		img.save(fileName + ".png", format="png")
-		exit(0)
 
 import multiprocessing
 
