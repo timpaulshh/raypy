@@ -34,6 +34,9 @@ class Color:
 	def __div__(self, scalar):
 		return Color.fromNp(self.rgb / scalar)
 
+	def __str__(self):
+		return "R:%s G:%s B:%s" % (self.r, self.g, self.b)
+
 	def toHex(self):
 		return "#%02x%02x%02x" % (self.r, self.g, self.b)
 

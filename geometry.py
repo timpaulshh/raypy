@@ -25,6 +25,9 @@ class Ray:
 	def fromPoints(cls, p1, p2):
 		return cls(np.array(p1), np.array(p2) - np.array(p1))
 
+	def __str__(self):
+		return "Origin: %s, Direction: %s" % (self.origin, self.direction)
+
 
 class GeometryObject:
 	__metaclass__ = ABCMeta

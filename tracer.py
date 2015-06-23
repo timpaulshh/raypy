@@ -236,21 +236,21 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		return C
 
 class PathTracer(Tracer):
-	MAX_DEPTH = 5
+	MAX_DEPTH = 2
 	RAY_PER_PIXEL = 16
+	DIFFUSE_REFLECT = 5
 
 	def trace(self, ray, objects, lights):
-		colors = [None] * RAY_PER_PIXEL
+		C = Color(0, 0, 0)
 
-		for i in range(RAY_PER_PIXEL):
-			colors[i] = self.recursiveTrace(ray, objects, lights, 0)
+		for i in range(self.RAY_PER_PIXEL):
+			C =  C + (self.recursiveTrace(ray, objects, lights, 0) / self.RAY_PER_PIXEL)
 
-		# average con colors.
-		pass
+		return C
 
 	def recursiveTrace(self, ray, objects, lights, depth):
-		if depth > MAX_DEPTH:
-			return WHITE
+		if depth > self.MAX_DEPTH:
+			return Color(0, 0, 0)
 
 		distances = self.distances(objects, ray)
 		if abs(distances[0].distance) < EPSILON:
@@ -278,12 +278,55 @@ class PathTracer(Tracer):
 			C = C + recursiveValue
 
 		if nearest.object.material.diffuse > 0:
-			N = nearest.object.normalAt(intersection)
-			# calculate random new ray direction from hemisphere.
-			# calculate random hemisphere shit in tangent space:
-			# http://www.keithlantz.net/2013/03/a-basic-path-tracer-with-cuda/
-			# http://www.rorydriscoll.com/2009/01/07/better-sampling/
+			for c in range(self.DIFFUSE_REFLECT):
+				N = nearest.object.normalAt(intersection)
+				# calculate random new ray direction from hemisphere.
+				# calculate random hemisphere shit in tangent space:
+				# http://www.keithlantz.net/2013/03/a-basic-path-tracer-with-cuda/
+				# http://www.rorydriscoll.com/2009/01/07/better-sampling/
+				D_tangent_space = self.random_normal_hemisphere()
 
-			# get local coordinate system from at normal.
-			# transform tangent-space shit in this normal space.
-			# this is the new direction.
+				# get local coordinate system from at normal.
+				local_coord = self.local_coordinate_system_from(N, intersection)
+
+				# transform tangent-space shit in this normal space.
+				new_D = np.dot(local_coord, D_tangent_space)
+
+				Diffuse = Ray(intersection, new_D)
+				recursiveValue = self.recursiveTrace(Diffuse, objects, lights, depth+1)
+
+				C = C + (recursiveValue / self.DIFFUSE_REFLECT)
+
+		return C
+
+
+	def random_normal_hemisphere(self):
+		from random import random
+
+		# generate random numbers between 0.0 and 1.0.
+		u1 = random()
+		u2 = random()
+
+		import math
+
+		r = math.sqrt(u1)
+		theta = 2 * math.pi * u2
+
+		x = r * math.cos(theta)
+		y = r * math.sin(theta)
+
+		return np.array([x,y, math.sqrt(max(0.0, 1.0-u1))])
+
+	def local_coordinate_system_from(self,N, P):
+		x = N[0] +1
+		y = N[1] +1
+		z = N[2] -1
+
+		ortho_N = np.cross(N, np.array([x, y, z]))
+
+		from geometry import normalize
+		axis_1 = normalize(ortho_N)
+		axis_2 = normalize(np.cross(ortho_N, N))
+
+		return np.array([axis_1, N, axis_2])
+

@@ -2,7 +2,7 @@
 
 from geometry import Plane, Sphere
 from scene import Screen, Scene
-from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTracer, RecursiveRayTracer
+from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTracer, RecursiveRayTracer, PathTracer
 from material import Material, Color
 from window import Window
 
@@ -54,6 +54,8 @@ if __name__ == "__main__":
 			tracer = ShadingShadowRayTracer(scene.eye)
 		elif value == "Recursive":
 			tracer = RecursiveRayTracer(scene.eye)
+		elif value == "PathTracing":
+			tracer = PathTracer()
 		else:
 			print "Unknown Ray-Tracer Algorithm. Exiting ..."
 			exit(1)
