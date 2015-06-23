@@ -9,19 +9,19 @@ class FileRenderer():
 		self.scene = scene
 
 	def render(self, fileName):
-		import sys
+		import sys, time
 		img = Image.new("RGB", (self.width, self.height))
 
-		processcount = 4
+		processCount = 4
 
 		from multiprocessing.queues import SimpleQueue
 		q2 = SimpleQueue() # in this case yolo.
 
 		from processes import BlockProcess
 
-		threads = BlockProcess.forCount(4, self.width, self.height, self.tracer, self.scene, q2)
-		count = len(threads)
-		print count
+		threads = BlockProcess.forCount(processCount, self.width, self.height, self.tracer, self.scene, q2)
+
+		startTime = time.time()
 
 		print "Starting Processes..."
 		for t in threads:
@@ -32,7 +32,7 @@ class FileRenderer():
 		drawn = 0
 		draw = ImageDraw.Draw(img)
 
-		while count_finished < count:
+		while count_finished < processCount:
 			info = q2.get()
 
 			if info == "finished.":
@@ -41,11 +41,19 @@ class FileRenderer():
 				draw.point(info[0], fill=info[1])
 				drawn = drawn+1
 			
-			sys.stdout.write("Progress: %2.2f%%\r" % (drawn / float(self.width*self.height) * 100))
+			progress = drawn / float(self.width*self.height)
+
+			timeString = ""
+			if progress > 0:
+				passedTime = time.time() - startTime
+				estimatedTime = passedTime / progress - passedTime
+				timeString = "\tRemaining time: %2.2fs" % (estimatedTime)
+
+			sys.stdout.write("Progress: %2.2f%% %s        \r" % (progress * 100, timeString))
 			sys.stdout.flush()
 
 		print "Joining Processes..."
-		for e,t in enumerate(threads):
+		for t in threads:
 			t.join()
 		print "Finished"
 			
