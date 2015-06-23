@@ -14,12 +14,13 @@ if __name__ == "__main__":
 	p5 = Plane([0, 0, 5], [0, 0, -1], Material(Color(0, 200, 0), 1, 0, 0.1))
 	p6 = Plane([0, 0, -5], [0, 0, 1], Material(Color(200, 0, 0), 1, 0, 0.1))
 
-	s1 = Sphere([0, 3, 2], 2, Material(Color(200, 200, 0), 1, 0.8, 0.1, refractive=False, n=1.52))
+	s1 = Sphere([0, 3, 2], 2, Material(Color(200, 200, 0), 1, 0, 0.1, refractive=False, n=1.52))
 	s2 = Sphere([4, 2, 1], 0.5, Material(Color(0, 250, 0), 1, 0.8, 0.1, refractive=False, n=1.52))
 	s3 = Sphere([-3, 2, 1], 1, Material(Color(0, 0, 250), 1, 0.8, 0.1, refractive=False, n=1.52))
 	s4 = Sphere([2, -2, 1], 0.8, Material(Color(0, 250, 250), 1, 0.8, 0.1, refractive=False, n=1.52))
 
-	l1 = Sphere([0, -2.5, 0], 1, Material(Color(255, 255, 255), 1, 1, 1))
+	l1 = Sphere([-3, -2.5, 3], 1, Material(Color(255, 255, 255), 1, 1, 1))
+	l2 = Sphere([3, -2.5, -3], 1, Material(Color(255, 255, 255), 1, 1, 1))
 
 	eye = [0, 0, -4.9]
 
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 	HEIGHT = args.height
 	bla = 10.0 / WIDTH 
 	screen = Screen([0, 0, -1], [0, 0, -1], WIDTH, HEIGHT, bla)
-	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2, s3, s4], lights=[l1])
+	scene = Scene(eye=eye, screen=screen, geometry=[s1, p1, p2, p3, p4, p5, p6, s2, s3, s4], lights=[l1,l2])
 
 	if not args.render is None:
 		print "rendering mode into: %s with %s" % (args.render[0], args.render[1])

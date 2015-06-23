@@ -56,9 +56,10 @@ class FileRenderer():
 			info = dataQueue.get()
 			draw.point(info[0], fill=info[1])
 
+		print "Saving to file..."
+		img.save(fileName + ".png", format="png")
+
 		print "Joining Processes..."
 		for t in threads:
 			t.join()
 		print "Finished in %02dm %02ds"%(divmod(time.time()-startTime, 60))
-			
-		img.save(fileName + ".png", format="png")
