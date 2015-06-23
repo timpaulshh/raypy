@@ -16,6 +16,8 @@ class Window(Frame):
 		self.scene = scene
 		self.after_id = 0
 		self.tracer = tracer
+		self.width = width
+		self.height = height
 
 		self.__init_window(height, width)
 
@@ -61,27 +63,38 @@ class Window(Frame):
 		self.__draw()
 
 	def __update(self):
-		ray = Ray.fromPoints(p1=self.scene.eye, p2=self.scene.screen.pixelToWorldCoord(self.d))
-		self.img.put(self.tracer.trace(ray, self.scene.geometry, self.scene.lights).toHex(), (self.d[0], self.d[1]))
-		self.master.update()
+		item = self.q2.get()
+
+		if item == "finished.":
+			self.finishedThreads += 1
+		else:
+			self.img.put(item[1], item[0])
+			self.master.update()
+
+		if self.finishedThreads == 4:
+			for t in self.threads:
+				t.join()
+
+			self.master.after_cancel(self.after_id)
+			self.resetButton.config(state="active")
+			return
+
+		self.after_id = self.master.after(0, self.__update)
 
 	def __draw(self):
-		# update image
+		from processes import BlockProcess
+		from multiprocessing.queues import SimpleQueue
+		self.q2 = SimpleQueue()
+		self.finishedThreads = 0
+
+		self.threads = BlockProcess.forCount(4, self.width, self.height, self.tracer, self.scene, self.q2)
+
+		for t in self.threads:
+			t.start()
+
 		self.__update()
 
-		# next self.d
-		if self.d[0] < self.scene.screen.resolutionX:
-			self.d[0] = self.d[0] + 1
-		else:
-			if self.d[1] < self.scene.screen.resolutionY:
-				self.d[0] = 0
-				self.d[1] = self.d[1] + 1
-			else:
-				self.master.after_cancel(self.after_id)
-				self.resetButton.config(state="active")
-				return
-
-		self.after_id = self.master.after(0, self.__draw)
+		self.after_id = self.master.after(0, self.__update)
 
 	def __onResetPressed(self):
 		self.img.blank()
