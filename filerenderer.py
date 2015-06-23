@@ -39,9 +39,9 @@ class FileRenderer():
 			if progress > 0:
 				passedTime = time.time() - startTime
 				estimatedTime = passedTime / progress - passedTime
-				timeString = "\tRemaining time: %2.2fs" % (estimatedTime)
+				timeString = "\tRemaining time: %02dm %02ds" % (divmod(estimatedTime, 60))
 
-			sys.stdout.write("Progress: %2.2f%% %s        \r" % (progress * 100, timeString))
+			sys.stdout.write("Progress: %2.2f%% %s          \r" % (progress * 100, timeString))
 			sys.stdout.flush()
 
 			import Queue
@@ -59,6 +59,6 @@ class FileRenderer():
 		print "Joining Processes..."
 		for t in threads:
 			t.join()
-		print "Finished in %2.2fs"%(time.time()-startTime)
+		print "Finished in %02dm %02ds"%(divmod(time.time()-startTime, 60))
 			
 		img.save(fileName + ".png", format="png")
