@@ -6,6 +6,8 @@ from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTrace
 
 
 class Window(Frame):
+	RENDER_PROCESSES = 4
+
 	def __init__(self, width, height, scene, tracer, calculate=None):
 		Frame.__init__(self, master=None)
 
@@ -63,16 +65,16 @@ class Window(Frame):
 		self.__draw()
 
 	def __update(self):
-		if self.q1.qsize() >= 4:
-			self.finishedThreads = 4
-			while not self.q1.empty():
-				self.q1.get()
+		if self.finishedQueue.qsize() >= self.RENDER_PROCESSES:
+			self.finishedThreads = self.RENDER_PROCESSES
+			while not self.finishedQueue.empty():
+				self.finishedQueue.get()
 
-		if not self.q2.empty():
-			item = self.q2.get()
+		if not self.dataQueue.empty():
+			item = self.dataQueue.get()
 			self.img.put(item[1], item[0])
 			self.master.update()
-		elif self.finishedThreads == 4:
+		elif self.finishedThreads == self.RENDER_PROCESSES:
 			for t in self.threads:
 				t.join()
 
@@ -85,11 +87,11 @@ class Window(Frame):
 	def __draw(self):
 		from processes import BlockProcess
 		from multiprocessing import Queue
-		self.q1 = Queue()
-		self.q2 = Queue()
+		self.finishedQueue = Queue()
+		self.dataQueue = Queue()
 		self.finishedThreads = 0
 
-		self.threads = BlockProcess.forCount(4, self.width, self.height, self.tracer, self.scene, self.q2, self.q1)
+		self.threads = BlockProcess.forCount(self.RENDER_PROCESSES, self.width, self.height, self.tracer, self.scene, self.dataQueue, self.finishedQueue)
 
 		for t in self.threads:
 			t.start()
