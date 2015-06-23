@@ -7,23 +7,21 @@ from material import Material, Color
 from window import Window
 
 if __name__ == "__main__":
-	p1 = Plane([0, 5, 0], [0, -1, 0], Material(Color(0, 0, 200), 0.5, 0, 0.2))
-	p2 = Plane([0, -5, 0], [0, 1, 0], Material(Color(100, 100, 100), 0.5, 0, 0.2))
-	p3 = Plane([5, 0, 0], [-1, 0, 0], Material(Color(100, 50, 50), 0.5, 0, 0.2))
-	p4 = Plane([-5, 0, 0], [1, 0, 0], Material(Color(20, 20, 20), 0.5, 0, 0.2))
-	p5 = Plane([0, 0, 5], [0, 0, -1], Material(Color(0, 200, 0), 0.5, 0, 0.2))
-	p6 = Plane([0, 0, -5], [0, 0, 1], Material(Color(200, 0, 0), 0.5, 0, 0.2))
+	p1 = Plane([0, 5, 0], [0, -1, 0], Material(Color(0, 0, 200), 1, 0, 0.1))
+	p2 = Plane([0, -5, 0], [0, 1, 0], Material(Color(100, 100, 100), 1, 0, 0.1))
+	p3 = Plane([5, 0, 0], [-1, 0, 0], Material(Color(255, 255, 255), 1, 0, 0.1))
+	p4 = Plane([-5, 0, 0], [1, 0, 0], Material(Color(20, 20, 20), 1, 0, 0.1))
+	p5 = Plane([0, 0, 5], [0, 0, -1], Material(Color(0, 200, 0), 1, 0, 0.1))
+	p6 = Plane([0, 0, -5], [0, 0, 1], Material(Color(200, 0, 0), 1, 0, 0.1))
 
-	s1 = Sphere([0, 3, 2], 2, Material(Color(200, 200, 0), 0.5, 0.8, 0.2, refractive=False, n=1.52))
-	s2 = Sphere([4, 2, 1], 0.5, Material(Color(0, 250, 0), 0.5, 0.8, 0.2, refractive=False, n=1.52))
-	s3 = Sphere([-3, 2, 1], 1, Material(Color(0, 0, 250), 0.5, 0.8, 0.2, refractive=False, n=1.52))
-	s4 = Sphere([2, -2, 1], 0.8, Material(Color(0, 250, 250), 0.5, 0.8, 0.2, refractive=False, n=1.52))
+	s1 = Sphere([0, 3, 2], 2, Material(Color(200, 200, 0), 1, 0.8, 0.1, refractive=False, n=1.52))
+	s2 = Sphere([4, 2, 1], 0.5, Material(Color(0, 250, 0), 1, 0.8, 0.1, refractive=False, n=1.52))
+	s3 = Sphere([-3, 2, 1], 1, Material(Color(0, 0, 250), 1, 0.8, 0.1, refractive=False, n=1.52))
+	s4 = Sphere([2, -2, 1], 0.8, Material(Color(0, 250, 250), 1, 0.8, 0.1, refractive=False, n=1.52))
 
-	l1 = Sphere([0, -4, 0], 1, Material(Color(255, 255, 255), 0.5, 0.2, 0.2))
+	l1 = Sphere([0, -2.5, 0], 1, Material(Color(255, 255, 255), 1, 1, 1))
 
 	eye = [0, 0, -4.9]
-
-	
 
 	import argparse
 	parser = argparse.ArgumentParser(description="Ray Tracing in Python.")

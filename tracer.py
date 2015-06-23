@@ -36,13 +36,26 @@ class Tracer:
 class RayTracer(Tracer):
 	__metaclass__ = ABCMeta
 
-	def lightAttenuation(self, intersection, light):
+	def distanceBetween(self, p1, p2):
 		from geometry import vector_length
 
-		path = light.center - intersection
-		distance = vector_length(path)
+		path = p2 - p1
+		return vector_length(path)
 
-		return 1.0 / (distance**2)
+	def lightAttenuation2(self, distance):
+		if distance < 0.001:
+			return 1
+
+		# empirisch ermittelte konstanten!
+		a = 0
+		b = 0
+		c = 0.5
+
+		return 1.0 / (a + b*distance + c*distance*distance)
+
+	def lightAttenuation(self, intersection, light):
+		distance = self.distanceBetween(intersection, light.center)
+		return self.lightAttenuation2(distance)
 
 	@abstractmethod
 	def shading(self, intersection, intersector, light):
@@ -70,9 +83,10 @@ class SimpleRayTracer(RayTracer):
 
 class SimpleShadowRayTracer(RayTracer):
 	def shading(self, intersection, intersector, light):
+		attenuation = self.lightAttenuation(intersection, light)
 		ambient = intersector.getColor() * intersector.material.ambient
-		diffuse = intersector.getColor() * intersector.material.diffuse
-		specular = intersector.getColor() * intersector.material.specular
+		diffuse = intersector.getColor() * intersector.material.diffuse * attenuation
+		specular = intersector.getColor() * intersector.material.specular * attenuation
 
 		return ambient + diffuse + specular
 
@@ -143,6 +157,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		return Color(r, g, b)
 
 	def shading(self, intersection, intersector, light):
+		attenuation = self.lightAttenuation(intersection=intersection, light=light)
 		shadowRay = Ray.fromPoints(p1=intersection, p2=light.center)
 		# phong-blinn shading
 
@@ -155,6 +170,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		if cos_delta < 0:
 			cos_delta = 0
 		diffuse = light.getColor() * intersector.material.diffuse * cos_delta
+		diffuse = diffuse * attenuation
 
 		# specular (blinn)
 		V = Ray.fromPoints(intersection, self.eye).direction
@@ -163,6 +179,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		if cos_theta < 0:
 			cos_theta = 0
 		specular = light.getColor() * intersector.material.specular * math.pow(cos_theta, 10)
+		specular = specular * attenuation
 
 		return ambient + diffuse + specular
 
@@ -174,9 +191,9 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		self.eye = eye
 
 	def trace(self, ray, objects, lights):
-		return self.recursiveTrace(ray, objects, lights, 0)
+		return self.recursiveTrace(ray, objects, lights, 0, 0)
 
-	def recursiveTrace(self, ray, objects, lights, depth):
+	def recursiveTrace(self, ray, objects, lights, depth, distance):
 		if depth > self.MAX_DEPTH:
 			return WHITE
 
@@ -193,8 +210,9 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 
 		# default lighting
 		C = nearest.object.getColor() * nearest.object.material.ambient
+
 		for light in lights:
-			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light) * LIGHT_DAMPING**depth)
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -208,8 +226,9 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N
 			reflection = Ray(intersection, reflectionRayDirection)
 
-			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
-			recursiveValue = recursiveValue * nearest.object.material.specular * LIGHT_DAMPING**depth
+			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1, distance + nearest.distance)
+			recursiveValue = recursiveValue * nearest.object.material.specular
+			recursiveValue = recursiveValue * self.lightAttenuation2(distance=distance)
 
 			C = C + recursiveValue
 
@@ -235,25 +254,25 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 			# catch total internal reflection
 			if not (sinT2 > 1.0):
 				refraction = Ray(intersection, n * ray.direction - (n + np.sqrt(1.0 - sinT2)) * normal)
-				value = self.recursiveTrace(refraction, objects, lights, depth + 1)
+				value = self.recursiveTrace(refraction, objects, lights, depth + 1, distance + nearest.distance)
 
 				C = C + value
 		return C
 
 class PathTracer(ShadingShadowRayTracer):
-	MAX_DEPTH = 1
-	RAY_PER_PIXEL = 2
+	MAX_DEPTH = 2
+	RAY_PER_PIXEL = 3
 	DIFFUSE_REFLECT = 5
 
 	def trace(self, ray, objects, lights):
 		C = Color(0, 0, 0)
 
 		for i in range(self.RAY_PER_PIXEL):
-			C =  C + (self.recursiveTrace(ray, objects, lights, 0) / self.RAY_PER_PIXEL)
+			C =  C + (self.recursiveTrace(ray, objects, lights, 0, 0) / self.RAY_PER_PIXEL)
 
 		return C
 
-	def recursiveTrace(self, ray, objects, lights, depth):
+	def recursiveTrace(self, ray, objects, lights, depth, distance):
 		if depth > self.MAX_DEPTH:
 			return Color(0, 0, 0)
 
@@ -268,11 +287,12 @@ class PathTracer(ShadingShadowRayTracer):
 
 		intersection = ray.origin + nearest.distance * ray.direction
 
-		C = Color(0, 0, 0)
+		A = nearest.object.getColor() * nearest.object.material.ambient
+		C = nearest.object.getColor() * nearest.object.material.ambient
 
 		# default lighting
 		for light in lights:
-			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light) * LIGHT_DAMPING**depth)
+			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
 		r = min(C.r, nearest.object.getColor().r)
 		g = min(C.g, nearest.object.getColor().g)
@@ -286,8 +306,9 @@ class PathTracer(ShadingShadowRayTracer):
 			reflectionRayDirection = ray.direction - 2 * (np.dot(ray.direction, N)) * N
 			reflection = Ray(intersection, reflectionRayDirection)
 
-			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1)
-			recursiveValue = recursiveValue * (nearest.object.material.specular * LIGHT_DAMPING**depth)
+			recursiveValue = self.recursiveTrace(reflection, objects, lights, depth + 1, distance + nearest.distance)
+			recursiveValue = recursiveValue * (nearest.object.material.specular)
+			recursiveValue = recursiveValue * self.lightAttenuation2(distance)
 
 			C = C + recursiveValue
 
@@ -307,9 +328,17 @@ class PathTracer(ShadingShadowRayTracer):
 				new_D = np.dot(local_coord, D_tangent_space)
 
 				Diffuse = Ray(intersection, new_D)
-				recursiveValue = self.recursiveTrace(Diffuse, objects, lights, depth+1)
+				recursiveValue = self.recursiveTrace(Diffuse, objects, lights, depth+1, distance + nearest.distance)
+				recursiveValue = recursiveValue / self.DIFFUSE_REFLECT
+				recursiveValue = recursiveValue * self.lightAttenuation2(distance)
 
-				C = C + ((recursiveValue / self.DIFFUSE_REFLECT) * LIGHT_DAMPING**depth)
+				ar = min(recursiveValue.r, A.r)
+				ag = min(recursiveValue.g, A.g)
+				ab = min(recursiveValue.b, A.b)
+
+				recursiveValue2 = Color(ar, ag, ab)
+
+				C = C + recursiveValue2
 
 		return C
 
