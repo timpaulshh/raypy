@@ -6,7 +6,7 @@ from tracer import SimpleRayTracer, SimpleShadowRayTracer, ShadingShadowRayTrace
 
 
 class Window(Frame):
-	RENDER_PROCESSES = 3
+	RENDER_PROCESSES = 2
 
 	def __init__(self, width, height, scene, tracer, calculate=None):
 		Frame.__init__(self, master=None)
