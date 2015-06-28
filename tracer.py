@@ -260,8 +260,8 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		return C
 
 class PathTracer(ShadingShadowRayTracer):
-	MAX_DEPTH = 2
-	RAY_PER_PIXEL = 3
+	MAX_DEPTH = 1
+	RAY_PER_PIXEL = 24
 	DIFFUSE_REFLECT = 5
 
 	def trace(self, ray, objects, lights):
