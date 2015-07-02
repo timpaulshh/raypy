@@ -150,11 +150,7 @@ class ShadingShadowRayTracer(SimpleShadowRayTracer):
 		for light in lights:
 			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
-		r = min(C.r, nearest.object.getColor().r)
-		g = min(C.g, nearest.object.getColor().g)
-		b = min(C.b, nearest.object.getColor().b)
-
-		return Color(r, g, b)
+		return C
 
 	def shading(self, intersection, intersector, light):
 		attenuation = self.lightAttenuation(intersection=intersection, light=light)
@@ -214,12 +210,6 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 		for light in lights:
 			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
-		r = min(C.r, nearest.object.getColor().r)
-		g = min(C.g, nearest.object.getColor().g)
-		b = min(C.b, nearest.object.getColor().b)
-
-		C = Color(r, g, b)
-
 		# recursive reflection computation.
 		if nearest.object.material.specular > 0:
 			N = nearest.object.normalAt(intersection)
@@ -261,8 +251,8 @@ class RecursiveRayTracer(ShadingShadowRayTracer):
 
 class PathTracer(ShadingShadowRayTracer):
 	MAX_DEPTH = 1
-	RAY_PER_PIXEL = 24
-	DIFFUSE_REFLECT = 5
+	RAY_PER_PIXEL = 8
+	DIFFUSE_REFLECT = 10
 
 	def trace(self, ray, objects, lights):
 		C = Color(0, 0, 0)
@@ -294,12 +284,6 @@ class PathTracer(ShadingShadowRayTracer):
 		for light in lights:
 			C = C + (self.shading(intersection, nearest.object, light) * self.calcShadowFactor(intersection, objects, light))
 
-		r = min(C.r, nearest.object.getColor().r)
-		g = min(C.g, nearest.object.getColor().g)
-		b = min(C.b, nearest.object.getColor().b)
-
-		C = Color(r, g, b)
-
 		# recursive reflection computation.
 		if nearest.object.material.specular > 0:
 			N = nearest.object.normalAt(intersection)
@@ -319,26 +303,23 @@ class PathTracer(ShadingShadowRayTracer):
 				# calculate random hemisphere shit in tangent space:
 				# http://www.keithlantz.net/2013/03/a-basic-path-tracer-with-cuda/
 				# http://www.rorydriscoll.com/2009/01/07/better-sampling/
-				D_tangent_space = self.random_normal_hemisphere()
+				#D_tangent_space = self.random_normal_hemisphere()
 
-				# get local coordinate system from at normal.
-				local_coord = self.local_coordinate_system_from(N, intersection)
+				## get local coordinate system from at normal.
+				#local_coord = self.local_coordinate_system_from(N)
 
-				# transform tangent-space shit in this normal space.
-				new_D = np.dot(local_coord, D_tangent_space)
+				## transform tangent-space shit in this normal space.
+				#new_D = np.dot(local_coord, D_tangent_space)
+
+				from random import uniform
+				new_D = np.array([uniform(-1, 1), uniform(-1, 1), uniform(-1, 1)])
 
 				Diffuse = Ray(intersection, new_D)
 				recursiveValue = self.recursiveTrace(Diffuse, objects, lights, depth+1, distance + nearest.distance)
 				recursiveValue = recursiveValue / self.DIFFUSE_REFLECT
 				recursiveValue = recursiveValue * self.lightAttenuation2(distance)
 
-				ar = min(recursiveValue.r, A.r)
-				ag = min(recursiveValue.g, A.g)
-				ab = min(recursiveValue.b, A.b)
-
-				recursiveValue2 = Color(ar, ag, ab)
-
-				C = C + recursiveValue2
+				C = C + recursiveValue
 
 		return C
 
@@ -352,15 +333,15 @@ class PathTracer(ShadingShadowRayTracer):
 
 		import math
 
-		r = math.sqrt(u1)
-		theta = 2 * math.pi * u2
+		r = math.sqrt(1 - u1 * u1)
+		phi = 2 * math.pi * u2
 
-		x = r * math.cos(theta)
-		y = r * math.sin(theta)
+		x = r * math.cos(phi)
+		z = r * math.sin(phi)
 
-		return np.array([x,y, math.sqrt(max(0.0, 1.0-u1))])
+		return np.array([x, u1, z])
 
-	def local_coordinate_system_from(self,N, P):
+	def local_coordinate_system_from(self, N):
 		x = N[0] +1
 		y = N[1] +1
 		z = N[2] -1
@@ -372,4 +353,3 @@ class PathTracer(ShadingShadowRayTracer):
 		axis_2 = normalize(np.cross(ortho_N, N))
 
 		return np.array([axis_1, N, axis_2])
-
