@@ -14,10 +14,10 @@ if __name__ == "__main__":
 	p5 = Plane([0, 0, 5], [0, 0, -1], Material(Color(255, 0, 255), 1, 0, 0.1))
 	p6 = Plane([0, 0, -5], [0, 0, 1], Material(Color(0, 255, 255), 1, 0, 0.1))
 
-	s1 = Sphere([0, 3, 2], 2, Material(Color(255, 255, 255), 1, 0, 0.1, refractive=False, n=1.52))
-	s2 = Sphere([4, 2, 1], 0.5, Material(Color(255, 255, 255), 1, 0, 0.1, refractive=False, n=1.52))
-	s3 = Sphere([-3, 2, 1], 1, Material(Color(255, 255, 255), 1, 0, 0.1, refractive=False, n=1.52))
-	s4 = Sphere([2, -2, 1], 0.8, Material(Color(255, 255, 255), 1, 0, 0.1, refractive=False, n=1.52))
+	s1 = Sphere([0, 3, 2], 2, Material(Color(100, 100, 100), 1, 0, 0.1, refractive=False, n=1.52))
+	s2 = Sphere([4, 2, 1], 0.5, Material(Color(100, 100, 100), 1, 0, 0.1, refractive=False, n=1.52))
+	s3 = Sphere([-3, 2, 1], 1, Material(Color(100, 100, 100), 1, 0, 0.1, refractive=False, n=1.52))
+	s4 = Sphere([2, -2, 1], 0.8, Material(Color(100, 100, 100), 1, 0, 0.1, refractive=False, n=1.52))
 
 	l1 = Sphere([-3, -2.5, 3], 1, Material(Color(255, 255, 255), 1, 1, 1))
 	l2 = Sphere([3, -2.5, -3], 1, Material(Color(255, 255, 255), 1, 1, 1))
