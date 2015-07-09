@@ -105,6 +105,120 @@ class Sphere(GeometryObject):
 
 		return np.array([nx, ny, nz])
 
+class Triangle(GeometryObject):
+	def __init__(self, v0, v1, v2, material=None):
+		GeometryObject.__init__(self, material)
+		self.v0 = np.array(v0)
+		self.v1 = np.array(v1)
+		self.v2 = np.array(v2)
+
+	def intersect(self, ray):
+		# get triangles normal plane
+		U = self.v1 - self.v0
+		V = self.v2 - self.v0
+		N = np.cross(U, V)
+
+		P = Plane(self.v0, N)
+
+		distance = P.intersect(ray)[0]
+
+		if distance == np.inf:
+			return [np.inf]
+
+		intersection = ray.origin + ray.direction * distance
+
+		if self.pointIn(intersection):
+			return [distance]
+
+		return [np.inf]
+
+	def pointIn(self, point):
+		U = self.v1 - self.v0
+		V = self.v2 - self.v0
+
+		# is intersection inside the triangle?
+		uu = np.dot(U, U)
+		uv = np.dot(U, V)
+		vv = np.dot(V, V)
+		w = point - self.v0
+		wu = np.dot(w, U)
+		wv = np.dot(w, V)
+		D = uv*uv - uu*vv
+
+		s = (uv*wv - vv*wu) / D
+		if s < 0.0 or s > 1.0:
+			return False
+
+		t = (uv*wu - uu*wv) / D
+		if t < 0.0 or (s+t) > 1.0:
+			return False
+
+		return True
+
+	def normalAt(self, point):
+		# get triangles normal plane
+		U = self.v1 - self.v0
+		V = self.v2 - self.v0
+		N = np.cross(U, V)
+
+		return N
+
+class Cube(GeometryObject):
+	def __init__(self, center, length, material=None):
+		GeometryObject.__init__(self, material)
+		self.center = np.array(center)
+		self.radius = length / 2
+
+		v1 = [center[0] - self.radius, center[1] + self.radius, center[2] - self.radius]
+		v2 = [center[0] + self.radius, center[1] + self.radius, center[2] - self.radius]
+		v3 = [center[0] + self.radius, center[1] + self.radius, center[2] + self.radius]
+		v4 = [center[0] - self.radius, center[1] + self.radius, center[2] + self.radius]
+		v5 = [center[0] - self.radius, center[1] - self.radius, center[2] - self.radius]
+		v6 = [center[0] + self.radius, center[1] - self.radius, center[2] - self.radius]
+		v7 = [center[0] + self.radius, center[1] - self.radius, center[2] + self.radius]
+		v8 = [center[0] - self.radius, center[1] - self.radius, center[2] + self.radius]
+
+		# unten
+		t1 = Triangle(v1, v2, v3, self.material)
+		t2 = Triangle(v1, v3, v4, self.material)
+
+		# vorne 
+		t3 = Triangle(v1, v2, v6, self.material)
+		t4 = Triangle(v1, v6, v5, self.material)
+
+		# links
+		t5 = Triangle(v4, v1, v5, self.material)
+		t6 = Triangle(v4, v5, v8, self.material)
+
+		# rechts
+		t7 = Triangle(v2, v3, v7, self.material)
+		t8 = Triangle(v2, v7, v6, self.material)
+
+		# hinten
+		t9 = Triangle(v3, v4, v8, self.material)
+		t10 = Triangle(v3, v8, v7, self.material)
+
+		# oben
+		t11 = Triangle(v5, v6, v7, self.material)
+		t12 = Triangle(v5, v7, v8, self.material)
+
+		self.triangles = [t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12]
+
+	def intersect(self, ray):
+		lol = map(lambda t: t.intersect(ray), self.triangles)
+		distance = reduce(lambda x,y: min(x, y), lol)
+		return distance
+
+	def normalAt(self, point):
+		for t in self.triangles:
+			if t.pointIn(point):
+				return t.normalAt(point)
+
+		return None
+
+
+
+
 
 if __name__ == "__main__":
 	r = Ray([0, 0, 0], [0, 0, 1])
